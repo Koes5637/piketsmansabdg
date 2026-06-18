@@ -19,6 +19,9 @@
         .tab-btn.active { border-bottom-color: #6366f1; color: #818cf8; }
         .modal-overlay { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(4px); }
         
+        /* Paksa Ikon Kalender Menjadi Putih */
+        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        
         /* Zoom Viewer Styles */
         .zoom-container { overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; }
         .zoom-content { transition: transform 0.2s ease-out; cursor: grab; max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -30,11 +33,10 @@
         /* --- PROJECTOR MODE STYLES --- */
         body.projector-mode #sidebar { display: none !important; }
         body.projector-mode #tab-container { display: none !important; }
-        body.projector-mode .admin-action { display: none !important; } /* Sembunyikan Tombol Admin */
+        body.projector-mode .admin-action { display: none !important; } 
         body.projector-mode #btn-manual-input { display: none !important; } 
-        body.projector-mode #live-stats-bar { display: none !important; } /* Sembunyikan Statistik Kecil */
+        body.projector-mode #live-stats-bar { display: none !important; } 
         
-        /* Paksa Lebar Penuh */
         body.projector-mode #main-content-area { width: 100% !important; flex: 1; }
         body.projector-mode #content-live { 
             padding: 0 !important; 
@@ -44,7 +46,6 @@
             flex-direction: column;
         }
         
-        /* Header Besar untuk Token */
         #projector-header { display: none; }
         body.projector-mode #projector-header { 
             display: flex; 
@@ -55,24 +56,21 @@
             border-bottom: 4px solid #4f46e5;
         }
         
-        /* Token Sangat Besar */
         body.projector-mode #projector-token-value { 
             font-size: 8rem; 
             line-height: 1; 
             text-shadow: 0 0 20px rgba(79, 70, 229, 0.8);
         }
 
-        /* Grid Layout untuk Nama Siswa */
         body.projector-mode #attendee-list {
             padding: 2rem;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* Responsif Grid */
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
             gap: 1.5rem;
             align-content: start;
             overflow-y: auto;
         }
         
-        /* Kartu Siswa di Layar Besar */
         body.projector-mode .student-card {
             padding: 1.5rem;
             border: 2px solid #334155;
@@ -85,7 +83,6 @@
             animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        /* Warna Kartu Berbeda Berdasarkan Status di Layar Besar */
         body.projector-mode .student-card[data-status="Terlambat"] { border-color: #f97316; background: rgba(249, 115, 22, 0.1); }
         body.projector-mode .student-card[data-status="Tepat Waktu"] { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
         body.projector-mode .student-card[data-status="Hadir"] { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
@@ -94,8 +91,6 @@
 
         body.projector-mode .student-name { font-size: 1.8rem; color: #f8fafc; font-weight: 800; letter-spacing: 0.025em; }
         body.projector-mode .student-info { font-size: 1.2rem; color: #cbd5e1; font-family: 'Courier New', monospace; font-weight: bold; }
-        
-        /* FIX: Tombol Exit selalu muncul di mode projector */
         body.projector-mode #exit-projector { display: block !important; }
 
         @keyframes popIn {
@@ -106,13 +101,9 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
 
-    <!-- LOGIN SCREEN -->
     <div id="view-login" class="view-section active flex-col items-center justify-center min-h-screen p-4 bg-indigo-900">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-slate-800 text-center">
-            
-            <!-- LOGO SEKOLAH (LOGIN) -->
             <img id="logo-login" src="" alt="Logo Sekolah" class="w-24 h-auto mx-auto mb-4 drop-shadow-md">
-            
             <h2 class="text-2xl font-bold text-indigo-900 mb-2">Admin Piket</h2>
             <p class="text-xs text-slate-400 mb-6">Database Pusat: Manajemen Siswa</p>
             <form onsubmit="picketApp.login(event)">
@@ -125,11 +116,9 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
-    <div id="view-dashboard" class="view-section flex-col md:flex-row min-h-screen overflow-hidden relative">
+    <div id="view-dashboard" class="view-section flex-col md:flex-row h-screen overflow-hidden relative">
         
-        <!-- SIDEBAR -->
-        <div id="sidebar" class="w-full md:w-1/3 p-6 flex flex-col border-r border-slate-700 bg-slate-900 z-10 shadow-xl transition-all">
+        <div id="sidebar" class="w-full md:w-1/3 p-6 flex flex-col border-r border-slate-700 bg-slate-900 z-10 shadow-xl transition-all overflow-y-auto">
             <div class="flex justify-between items-center mb-8">
                 <button onclick="picketApp.logout()" class="p-2 text-slate-400 hover:text-white transition"><i class="ph ph-sign-out text-2xl"></i></button>
                 <div class="flex gap-2">
@@ -141,17 +130,14 @@
             </div>
 
             <div class="flex-1 flex flex-col items-center justify-center text-center space-y-6">
-                <!-- LOGO SEKOLAH (SIDEBAR) -->
                 <img id="logo-sidebar" src="" alt="Logo Sekolah" class="w-20 h-auto mx-auto mb-2 opacity-90 hover:opacity-100 transition-opacity drop-shadow-md">
 
-                <!-- TOKEN DISPLAY (3 DIGIT) -->
                 <div class="bg-white/5 p-8 rounded-[3rem] border border-white/10 shadow-[0_0_50px_rgba(79,70,229,0.15)] relative overflow-hidden w-full max-w-xs">
                     <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10"></div>
                     <p class="text-indigo-300 text-xs font-bold uppercase tracking-[0.3em] mb-2">Kode Token</p>
                     <div id="display-token" class="text-8xl font-mono font-black text-white tracking-widest drop-shadow-2xl">---</div>
                 </div>
 
-                <!-- TIMER & CONTROL -->
                 <div class="w-full max-w-xs space-y-2">
                     <div class="flex justify-between text-xs font-mono text-slate-400">
                         <span>Refresh: <span id="timer-text" class="text-white font-bold">10</span>s</span>
@@ -178,15 +164,12 @@
             </div>
         </div>
 
-        <!-- MAIN CONTENT -->
         <div id="main-content-area" class="w-full md:w-2/3 flex flex-col bg-slate-800 shadow-2xl overflow-hidden relative">
             
-            <!-- BUTTON EXIT PROJECTOR -->
             <button id="exit-projector" onclick="picketApp.toggleProjectorMode()" class="hidden absolute top-6 right-6 z-[60] bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl backdrop-blur text-lg font-bold border border-white/20 transition shadow-xl">
                 <i class="ph ph-x-circle mr-2"></i> Keluar Layar Penuh
             </button>
 
-            <!-- TABS -->
             <div id="tab-container" class="flex border-b border-slate-700 bg-slate-900/50 overflow-x-auto">
                 <button onclick="picketApp.switchMainTab('live')" id="tab-live" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-indigo-500 text-indigo-400">Monitor</button>
                 <button onclick="picketApp.switchMainTab('statistics')" id="tab-statistics" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition">Statistik</button>
@@ -194,9 +177,7 @@
                 <button onclick="picketApp.switchMainTab('data-student')" id="tab-data-student" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition">Data Siswa</button>
             </div>
 
-            <!-- LIVE MONITOR -->
             <div id="content-live" class="flex-1 flex flex-col overflow-hidden relative">
-                <!-- PROJECTOR HEADER -->
                 <div id="projector-header" class="hidden flex-col items-center justify-center p-8 bg-gradient-to-b from-indigo-900 to-slate-900 border-b border-slate-700 shadow-2xl">
                     <h1 class="text-4xl font-bold text-white mb-8 tracking-tight drop-shadow-md">PRESENSI SISWA MASUK</h1>
                     <div class="flex items-center bg-white/5 pr-16 pl-10 py-8 rounded-[2.5rem] border border-white/10 backdrop-blur-sm shadow-2xl">
@@ -209,27 +190,25 @@
                     </div>
                 </div>
 
-                <!-- Floating Action Button for Manual Input -->
                 <button id="btn-manual-input" onclick="picketApp.openManualInputModal()" class="absolute bottom-6 right-6 z-20 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-2xl flex items-center gap-2 transition-transform hover:scale-105">
                     <i class="ph ph-user-plus text-xl"></i>
                     <span class="font-bold text-sm pr-2">Input Manual</span>
                 </button>
 
-                <div id="live-stats-bar" class="p-6 grid grid-cols-4 gap-4">
-                    <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-700"><p class="text-[10px] text-slate-500 uppercase font-bold">Hadir</p><p id="stat-total" class="text-2xl font-bold">0</p></div>
-                    <div class="bg-emerald-900/20 p-4 rounded-2xl border border-emerald-900/30"><p class="text-[10px] text-emerald-500 uppercase font-bold">Tepat</p><p id="stat-ontime" class="text-2xl font-bold text-emerald-400">0</p></div>
-                    <div class="bg-orange-900/20 p-4 rounded-2xl border border-orange-900/30"><p class="text-[10px] text-orange-500 uppercase font-bold">Telat</p><p id="stat-late" class="text-2xl font-bold text-orange-400">0</p></div>
-                    <div class="bg-blue-900/20 p-4 rounded-2xl border border-blue-900/30"><p class="text-[10px] text-blue-500 uppercase font-bold">Izin/Skt</p><p id="stat-permit" class="text-2xl font-bold text-blue-400">0</p></div>
+                <div id="live-stats-bar" class="p-6 grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700"><p class="text-[10px] text-slate-500 uppercase font-bold">Hadir</p><p id="stat-total" class="text-xl font-bold">0</p></div>
+                    <div class="bg-emerald-900/20 p-3 rounded-xl border border-emerald-900/30"><p class="text-[10px] text-emerald-500 uppercase font-bold">Tepat</p><p id="stat-ontime" class="text-xl font-bold text-emerald-400">0</p></div>
+                    <div class="bg-orange-900/20 p-3 rounded-xl border border-orange-900/30"><p class="text-[10px] text-orange-500 uppercase font-bold">Telat</p><p id="stat-late" class="text-xl font-bold text-orange-400">0</p></div>
+                    <div class="bg-blue-900/20 p-3 rounded-xl border border-blue-900/30"><p class="text-[10px] text-blue-500 uppercase font-bold">Izin/Skt</p><p id="stat-permit" class="text-xl font-bold text-blue-400">0</p></div>
+                    <div class="bg-red-900/20 p-3 rounded-xl border border-red-900/30"><p class="text-[10px] text-red-500 uppercase font-bold">Belum/Alpha</p><p id="stat-alpha" class="text-xl font-bold text-red-400">0</p></div>
                 </div>
+                
                 <div id="attendee-list" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar pb-24">
                     <div class="text-center text-slate-600 mt-20 italic">Menunggu presensi...</div>
                 </div>
             </div>
 
-            <!-- STATISTICS (UPDATED) -->
             <div id="content-statistics" class="flex-1 hidden flex-col overflow-y-auto custom-scrollbar p-6 space-y-6">
-                
-                <!-- ACTION BAR STATISTIK & ARSIP (NEW) -->
                 <div class="bg-slate-900/80 p-5 rounded-3xl border border-slate-700 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
                         <h3 class="font-bold text-white text-lg flex items-center gap-2">
@@ -245,69 +224,43 @@
                             <i class="ph ph-image text-lg"></i> Simpan Grafik
                         </button>
                         <button id="btn-clear-stats" onclick="picketApp.clearOldStats()" class="flex-1 lg:flex-none justify-center px-4 py-2.5 bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/50 text-xs font-bold rounded-xl flex items-center gap-2 transition shadow-lg">
-                            <i class="ph ph-trash text-lg"></i> Hapus Data Bulan Lalu
+                            <i class="ph ph-trash text-lg"></i> Hapus Data Lama
                         </button>
                     </div>
                 </div>
 
-                <!-- ROW 1: Charts -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Bar Chart: Late Trend -->
                     <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-700 shadow-lg">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-orange-400 flex items-center gap-2">
-                                <i class="ph ph-trend-up"></i> Tren Keterlambatan
-                            </h3>
+                            <h3 class="font-bold text-orange-400 flex items-center gap-2"><i class="ph ph-trend-up"></i> Tren Keterlambatan</h3>
                             <select id="trend-selector" onchange="picketApp.updateTrendChart()" class="bg-slate-800 border border-slate-600 text-xs rounded px-2 py-1 text-white outline-none cursor-pointer">
-                                <option value="daily">Harian (30 Hari Terakhir)</option>
+                                <option value="daily">Harian</option>
                                 <option value="weekly">Mingguan</option>
                                 <option value="monthly" selected>Bulanan</option>
                             </select>
                         </div>
-                        <div class="chart-container bg-slate-900/80 rounded-xl p-2">
-                            <canvas id="chartLateMonth"></canvas>
-                        </div>
+                        <div class="chart-container bg-slate-900/80 rounded-xl p-2"><canvas id="chartLateMonth"></canvas></div>
                     </div>
-
-                    <!-- Pie Chart: Daily Distribution -->
                     <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-700 shadow-lg flex flex-col">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-indigo-400 flex items-center gap-2">
-                                <i class="ph ph-chart-pie-slice"></i> Komposisi Kehadiran
-                            </h3>
-                            <span class="text-[10px] bg-slate-800 px-2 py-1 rounded border border-slate-600">Hari Ini</span>
+                            <h3 class="font-bold text-indigo-400 flex items-center gap-2"><i class="ph ph-chart-pie-slice"></i> Komposisi Hari Ini</h3>
                         </div>
-                        <div class="chart-container flex items-center justify-center bg-slate-900/80 rounded-xl p-2">
-                            <canvas id="chartDistribution"></canvas>
-                        </div>
+                        <div class="chart-container flex items-center justify-center bg-slate-900/80 rounded-xl p-2"><canvas id="chartDistribution"></canvas></div>
                     </div>
                 </div>
 
-                <!-- ROW 2: Top Lists -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
-                    <!-- Top Frequency -->
                     <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-700">
-                        <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider border-b border-slate-700 pb-2">
-                            🏆 Top 10 Sering Terlambat
-                        </h4>
-                        <div id="list-top-freq" class="space-y-3">
-                            <div class="text-center text-slate-600 text-xs italic">Memuat data...</div>
-                        </div>
+                        <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider border-b border-slate-700 pb-2">🏆 Top 10 Sering Terlambat</h4>
+                        <div id="list-top-freq" class="space-y-3"><div class="text-center text-slate-600 text-xs italic">Memuat data...</div></div>
                     </div>
-
-                    <!-- Top Duration -->
                     <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-700">
-                        <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider border-b border-slate-700 pb-2">
-                            ⏳ Top 10 Durasi Terlama
-                        </h4>
-                        <div id="list-top-duration" class="space-y-3">
-                             <div class="text-center text-slate-600 text-xs italic">Memuat data...</div>
-                        </div>
+                        <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider border-b border-slate-700 pb-2">⏳ Top 10 Durasi Terlama</h4>
+                        <div id="list-top-duration" class="space-y-3"><div class="text-center text-slate-600 text-xs italic">Memuat data...</div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- CLASS REPORT -->
             <div id="content-class-report" class="flex-1 hidden flex-col overflow-hidden p-6 space-y-6">
                 
                 <div class="flex flex-col md:flex-row gap-4 justify-between bg-slate-900/30 p-4 rounded-2xl border border-slate-700">
@@ -332,9 +285,8 @@
                     <div class="flex gap-4 items-end bg-slate-900/30 p-4 rounded-2xl border border-slate-700">
                         <div class="flex-1">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Pilih Siswa</label>
-                            <select id="report-student-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="">-- Memuat Data Siswa --</option>
-                            </select>
+                            <input type="text" id="report-student-input" list="student-datalist" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ketik Nama atau NIS Siswa...">
+                            <datalist id="student-datalist"></datalist>
                         </div>
                         <button onclick="picketApp.generateIndividualReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition">Tampilkan</button>
                     </div>
@@ -392,9 +344,6 @@
 
             </div>
 
-            </div>
-
-            <!-- DATA STUDENT -->
             <div id="content-data-student" class="flex-1 hidden flex-col overflow-hidden p-6 space-y-6">
                 <div class="bg-slate-900/30 p-6 rounded-3xl border border-slate-700 space-y-6">
                     <div class="flex justify-between items-center">
@@ -410,10 +359,10 @@
                     <div class="text-center text-slate-600 mt-20 italic">Memuat data...</div>
                 </div>
             </div>
+
         </div>
     </div>
 
-    <!-- MODAL EDIT STATUS -->
     <div id="modal-edit" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -441,7 +390,6 @@
         </div>
     </div>
 
-    <!-- MODAL MANUAL INPUT -->
     <div id="modal-manual" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in flex flex-col max-h-[80vh]">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -454,10 +402,8 @@
                     <input type="text" id="manual-search-input" oninput="picketApp.searchManualStudent()" 
                         class="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none" 
                         placeholder="Ketik Nama atau NIS (tanpa titik)...">
-                    <p class="text-[10px] text-slate-400 mt-1">*Cukup ketik angka (misal: 242510), sistem otomatis mencocokkan.</p>
-                    <div id="manual-search-results" class="mt-2 space-y-1 max-h-40 overflow-y-auto hidden border border-slate-100 rounded-xl p-1 bg-slate-50">
-                        <!-- Search Results -->
-                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">*Cukup ketik angka (misal: 242510).</p>
+                    <div id="manual-search-results" class="mt-2 space-y-1 max-h-40 overflow-y-auto hidden border border-slate-100 rounded-xl p-1 bg-slate-50"></div>
                 </div>
                 
                 <div id="manual-selected-container" class="hidden text-center bg-indigo-50 p-4 rounded-xl border border-indigo-100">
@@ -481,7 +427,6 @@
         </div>
     </div>
 
-    <!-- MODAL BUKTI & ZOOM -->
     <div id="modal-proof" class="hidden fixed inset-0 z-[130] bg-black/95 flex flex-col h-screen w-screen">
         <div class="absolute top-4 right-4 z-50 flex gap-4">
             <div class="bg-slate-800/80 backdrop-blur rounded-full p-1 flex gap-1">
@@ -499,7 +444,6 @@
         </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
     <div id="modal-settings" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white text-slate-800 rounded-3xl shadow-2xl w-full max-w-md p-8">
             <div class="flex justify-between items-center mb-6">
@@ -513,7 +457,6 @@
                 </div>
                 <button onclick="picketApp.saveSettings()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100">Simpan Konfigurasi</button>
                 
-                <!-- MAINTENANCE SECTION -->
                 <div class="pt-4 border-t border-slate-100 mt-4">
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Pemeliharaan Penyimpanan</label>
                     <button onclick="picketApp.cleanOldEvidence()" class="w-full py-3 bg-red-50 text-red-600 font-bold rounded-xl border border-red-100 hover:bg-red-100 transition text-sm flex items-center justify-center gap-2">
@@ -544,17 +487,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // PATHS
         const APP_ID = 'presensi-sekolah-terintegrasi'; 
         const PATH_CONFIG = `artifacts/${APP_ID}/public/data/config`;
         const PATH_ATTENDANCE = `artifacts/${APP_ID}/public/data/attendance`;
         const PATH_IZIN = `artifacts/${APP_ID}/public/data/izin_global`;
 
-        // ==========================================
-        // KONFIGURASI LOGO SEKOLAH
-        // ==========================================
-		const LOGO_URL = "Logo.png";
-		
+        const LOGO_URL = "Logo.png";
         document.addEventListener("DOMContentLoaded", () => {
             const logoElements = ['logo-login', 'logo-sidebar', 'logo-projector'];
             logoElements.forEach(id => {
@@ -562,16 +500,14 @@
                 if(el) el.src = LOGO_URL;
             });
         });
-        // ==========================================
 
-        // Solid Background Plugin for Chart.js PNG Export
         const chartBgPlugin = {
             id: 'customCanvasBackgroundColor',
             beforeDraw: (chart) => {
                 const ctx = chart.canvas.getContext('2d');
                 ctx.save();
                 ctx.globalCompositeOperation = 'destination-over';
-                ctx.fillStyle = '#1e293b'; // Matches dark slate background
+                ctx.fillStyle = '#1e293b'; 
                 ctx.fillRect(0, 0, chart.width, chart.height);
                 ctx.restore();
             }
@@ -585,30 +521,21 @@
                 this.user = null;
                 this.unsubscribes = [];
                 
-                // Token & Control
                 this.tokenIntervalTime = 10;
                 this.isTokenRunning = true;
                 this.tokenTimer = null;
                 this.countdownTimer = null;
                 this.keepAliveTimer = null; 
 
-                // Edit & Zoom State
                 this.currentEditItem = null;
                 this.zoomScale = 1;
-                
-                // Manual Input State
                 this.manualSelectedStudent = null;
-
-                // Projector Mode State
                 this.isProjectorMode = false;
 
-                // Charts Instances
                 this.chartLateMonth = null;
                 this.chartDistribution = null;
                 this.trendStats = null;
                 this.statsDataCache = null;
-                
-                // Stats Cache for Export
                 this.currentStats = null;
 
                 this.initAuth();
@@ -628,7 +555,6 @@
                 if (!this.user) return;
                 await this.fetchSettings();
                 await this.fetchStudents();
-                // START LISTENING TO SESSION IMMEDIATELY FOR SYNC
                 this.setupSessionListener();
             }
 
@@ -637,7 +563,7 @@
                 if(document.getElementById('admin-pin').value === '762672') {
                     document.getElementById('view-login').classList.remove('active');
                     document.getElementById('view-dashboard').classList.add('active');
-                    this.switchMainTab('live'); // Set default tab to avoid null error
+                    this.switchMainTab('live'); 
                     this.startTokenLoop();
                     this.startLiveMonitor();
                 } else { alert('PIN Admin Salah!'); }
@@ -676,14 +602,12 @@
                     this.updateClassSelect();
                 } catch(e) { 
                     console.error("Fetch Student Error:", e); 
-                    const table = document.getElementById('student-table');
-                    if(table) table.innerHTML = '<div class="text-center text-red-400 p-4">Gagal memuat data siswa. Cek koneksi.</div>';
+                    document.getElementById('student-table').innerHTML = '<div class="text-center text-red-400 p-4">Gagal memuat data siswa. Cek koneksi.</div>';
                 }
             }
 
             updateStudentUI() {
-                const countEl = document.getElementById('count-students');
-                if(countEl) countEl.innerText = this.studentMap.size;
+                document.getElementById('count-students').innerText = this.studentMap.size;
                 this.renderStudentList();
             }
 
@@ -699,26 +623,32 @@
 
             renderStudentList() {
                 const container = document.getElementById('student-table');
-                if(!container) return;
+                if (!container) return;
                 
                 const searchInput = document.getElementById('search-student');
                 const filter = searchInput ? searchInput.value.toLowerCase() : '';
                 
+                if (this.studentMap.size === 0) {
+                    container.innerHTML = '<div class="text-center text-orange-400 mt-20 italic font-bold animate-pulse">Menyiapkan data siswa...</div>';
+                    // Do not call fetchStudents here to avoid loops
+                    return;
+                }
+
                 const filtered = Array.from(this.studentMap.entries())
                     .filter(([nis, s]) => (s.nama || "").toLowerCase().includes(filter) || nis.includes(filter))
                     .sort((a,b) => (a[1].nama || "").localeCompare(b[1].nama || ""))
-                    .slice(0, 50);
+                    .slice(0, 100); 
 
                 if (filtered.length === 0) {
-                    container.innerHTML = '<div class="text-center text-slate-600 mt-10 italic text-sm">Data tidak ditemukan.</div>';
+                    container.innerHTML = '<div class="text-center text-slate-400 mt-20 p-4 bg-slate-800 rounded-xl border border-slate-700">Data tidak ditemukan.</div>';
                     return;
                 }
 
                 container.innerHTML = filtered.map(([nis, s]) => `
-                    <div class="p-4 bg-slate-900/40 border border-slate-700 rounded-2xl flex justify-between items-center group hover:bg-slate-700/30 transition-all">
+                    <div class="p-4 bg-slate-800 border border-slate-600 rounded-xl flex justify-between items-center hover:bg-slate-700 transition-all mb-2">
                         <div>
-                            <p class="font-bold text-sm text-slate-100 uppercase">${s.nama}</p>
-                            <p class="text-[10px] text-slate-500 font-mono tracking-widest">${nis} • KELAS ${s.kelas}</p>
+                            <p class="font-bold text-sm text-white uppercase">${s.nama}</p>
+                            <p class="text-[11px] text-emerald-400 font-mono tracking-widest mt-1">NIS: ${nis} &bull; KELAS: ${s.kelas}</p>
                         </div>
                     </div>
                 `).join('');
@@ -809,7 +739,6 @@
                 }, 1000);
             }
 
-            // LISTENER FOR SYNC (WRITER/READER LOGIC)
             setupSessionListener() {
                 onSnapshot(doc(db, PATH_CONFIG, 'session'), (doc) => {
                     if(doc.exists()) {
@@ -817,7 +746,6 @@
                         document.getElementById('display-token').innerText = data.currentToken || '---';
                         document.getElementById('projector-token-value').innerText = data.currentToken || '---';
                         
-                        // Sync Timer visualization
                         if(this.isTokenRunning) {
                              const bar = document.getElementById('timer-bar');
                              bar.style.transition = 'none';
@@ -827,7 +755,6 @@
                                  bar.style.width = '0%';
                              }, 50);
                              
-                             // Reset Countdown Text
                              document.getElementById('timer-text').innerText = this.tokenIntervalTime;
                              if(this.countdownTimer) clearInterval(this.countdownTimer);
                              this.countdownTimer = setInterval(() => {
@@ -841,18 +768,14 @@
                 });
             }
 
-            // --- PROJECTOR MODE LOGIC (MODIFIED FOR FULLSCREEN) ---
             toggleProjectorMode() {
                 this.isProjectorMode = !this.isProjectorMode;
                 document.body.classList.toggle('projector-mode', this.isProjectorMode);
                 
-                // Force switch to live monitor if entering projector mode
                 if (this.isProjectorMode) {
                     this.switchMainTab('live');
-                    // STOP WRITING TO DB IN PROJECTOR MODE (BECOME READER)
                     this.stopTokenLoop(); 
-                    this.isTokenRunning = false; // Stop logic
-                    // Update UI to show paused state on sidebar (though hidden)
+                    this.isTokenRunning = false;
                     const btn = document.getElementById('btn-toggle-timer');
                     const indicator = document.getElementById('status-indicator');
                     btn.innerHTML = '<i class="ph ph-play-circle text-2xl"></i>';
@@ -860,7 +783,6 @@
                 }
             }
 
-            // --- LIVE MONITOR & EDIT LOGIC ---
             startLiveMonitor() {
                 if (!this.user) return;
                 const today = new Date().toISOString().split('T')[0];
@@ -892,17 +814,14 @@
                 this.unsubscribes.push(unsubAttendance);
             }
 
-            // --- SEND WA FUNCTION ---
             async sendWA(phone, name, time, type = 'late', docId = null, isIzin = false) {
                 if (!phone) {
                     phone = prompt("Nomor HP Wali Murid tidak ditemukan di database. Masukkan nomor HP (format: 628...):");
                     if (!phone) return;
                 }
                 
-                // PERBAIKAN REGEX: Hapus semua karakter non-angka (seperti spasi, strip, tanda +)
                 let cleanPhone = phone.replace(/\D/g, '');
                 
-                // Jika diawali angka 0, ubah jadi 62
                 if (cleanPhone.startsWith('0')) {
                     cleanPhone = '62' + cleanPhone.substring(1);
                 }
@@ -922,7 +841,6 @@
                 const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
                 window.open(url, '_blank');
 
-                // Update Status WA Sent
                 if (docId) {
                     try {
                         const collectionPath = isIzin ? PATH_IZIN : PATH_ATTENDANCE;
@@ -954,7 +872,6 @@
                             ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">${item.tipe === 's' ? 'SAKIT' : 'IZIN'}</span>`
                             : `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${isLate ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${item.status}</span>`;
 
-                        // WA Button logic
                         let waType = 'late';
                         let waTitle = 'Info Terlambat';
                         if (isIzin) {
@@ -1017,9 +934,13 @@
                 document.getElementById('stat-ontime').innerText = h - t;
                 document.getElementById('stat-late').innerText = t;
                 document.getElementById('stat-permit').innerText = p;
+                
+                const totalSiswa = this.studentMap.size || 0;
+                const alphaSementara = Math.max(0, totalSiswa - (h + p));
+                const statAlphaEl = document.getElementById('stat-alpha');
+                if(statAlphaEl) statAlphaEl.innerText = alphaSementara;
             }
 
-            // --- MANUAL INPUT LOGIC ---
             openManualInputModal() {
                 document.getElementById('modal-manual').classList.remove('hidden');
                 document.getElementById('manual-search-input').value = '';
@@ -1039,7 +960,6 @@
                     return;
                 }
 
-                // SMART SEARCH LOGIC (IGNORE DOTS)
                 const cleanKeyword = keyword.replace(/[^a-zA-Z0-9]/g, '');
 
                 const matches = Array.from(this.studentMap.entries())
@@ -1108,8 +1028,6 @@
                 }
             }
 
-            // --- STATISTICS LOGIC ---
-            
             async generateStatistics() {
                 try {
                     const attendanceSnap = await getDocs(query(collection(db, PATH_ATTENDANCE)));
@@ -1128,22 +1046,17 @@
                         if (data.status === 'Terlambat' && data.timestamp) {
                             const date = new Date(data.timestamp.seconds * 1000);
                             
-                            // Monthly
                             const monthKey = date.toLocaleString('id-ID', { month: 'long' });
                             monthlyStats[monthKey] = (monthlyStats[monthKey] || 0) + 1;
 
-                            // Daily
                             const dayKey = date.toISOString().split('T')[0]; 
                             dailyStats[dayKey] = (dailyStats[dayKey] || 0) + 1;
                             
-                            // Weekly
                             const weekKey = this.getWeekNumber(date);
                             weeklyStats[weekKey] = (weeklyStats[weekKey] || 0) + 1;
 
-                            // Freq Stats
                             studentLateCount[data.nis] = (studentLateCount[data.nis] || 0) + 1;
 
-                            // Duration Stats
                             const actualMinutes = date.getHours() * 60 + date.getMinutes();
                             let diff = actualMinutes - thresholdMinutes;
                             if (diff > 0) {
@@ -1152,14 +1065,12 @@
                         }
                     });
 
-                    // Store stats in cache
                     this.trendStats = {
                         monthly: monthlyStats,
                         daily: dailyStats,
                         weekly: weeklyStats
                     };
                     
-                    // Store extra cache for export functionalities
                     this.currentStats = {
                         studentLateCount,
                         studentLateDuration,
@@ -1221,7 +1132,7 @@
                 if (this.chartLateMonth) this.chartLateMonth.destroy();
 
                 const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(249, 115, 22, 0.8)'); // Orange
+                gradient.addColorStop(0, 'rgba(249, 115, 22, 0.8)');
                 gradient.addColorStop(1, 'rgba(249, 115, 22, 0.1)');
 
                 this.chartLateMonth = new Chart(ctx, {
@@ -1287,10 +1198,10 @@
                         datasets: [{
                             data: [hadir, sakit, izin, alpha],
                             backgroundColor: [
-                                '#10b981', // Emerald
-                                '#3b82f6', // Blue
-                                '#6366f1', // Indigo
-                                '#ef4444'  // Red
+                                '#10b981', 
+                                '#3b82f6', 
+                                '#6366f1', 
+                                '#ef4444'  
                             ],
                             borderWidth: 0,
                             hoverOffset: 10
@@ -1313,7 +1224,6 @@
             }
 
             renderTopLists(freqData, durData) {
-                // Top Frequency
                 const sortedFreq = Object.entries(freqData)
                     .sort((a,b) => b[1] - a[1])
                     .slice(0, 10);
@@ -1335,7 +1245,6 @@
                 }).join('');
                 document.getElementById('list-top-freq').innerHTML = freqHTML || '<div class="text-center text-slate-600 text-xs">Belum ada data.</div>';
 
-                // Top Duration
                 const sortedDur = Object.entries(durData)
                     .sort((a,b) => b[1] - a[1])
                     .slice(0, 10);
@@ -1358,144 +1267,6 @@
                 document.getElementById('list-top-duration').innerHTML = durHTML || '<div class="text-center text-slate-600 text-xs">Belum ada data.</div>';
             }
 
-            // --- EXPORT & CLEAR DATA (NEW FEATURES) ---
-            
-            exportStatsData() {
-                if (!this.currentStats) return alert("Harap tunggu hingga data statistik selesai dimuat.");
-
-                const { studentLateCount, studentLateDuration } = this.currentStats;
-
-                // 1. Format Data Top 10 Sering Terlambat
-                const topFreq = Object.entries(studentLateCount)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(([nis, count], i) => {
-                        const s = this.studentMap.get(nis) || {};
-                        return {
-                            "Peringkat": i + 1,
-                            "NIS": nis,
-                            "Nama Siswa": s.nama || "Unknown",
-                            "Kelas": s.kelas || "-",
-                            "Frekuensi (Kali)": count
-                        };
-                    });
-
-                // 2. Format Data Top 10 Durasi Terlama
-                const topDur = Object.entries(studentLateDuration)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(([nis, mins], i) => {
-                        const s = this.studentMap.get(nis) || {};
-                        return {
-                            "Peringkat": i + 1,
-                            "NIS": nis,
-                            "Nama Siswa": s.nama || "Unknown",
-                            "Kelas": s.kelas || "-",
-                            "Total Durasi (Menit)": mins
-                        };
-                    });
-
-                // Jika kosong
-                if (topFreq.length === 0) topFreq.push({"Info": "Tidak ada data keterlambatan."});
-                if (topDur.length === 0) topDur.push({"Info": "Tidak ada data keterlambatan."});
-
-                // Buat Workbook Excel
-                const wb = XLSX.utils.book_new();
-                
-                const wsFreq = XLSX.utils.json_to_sheet(topFreq);
-                const wsDur = XLSX.utils.json_to_sheet(topDur);
-                
-                XLSX.utils.book_append_sheet(wb, wsFreq, "Top 10 Frekuensi");
-                XLSX.utils.book_append_sheet(wb, wsDur, "Top 10 Durasi");
-                
-                const filename = `Statistik_Keterlambatan_${new Date().toISOString().split('T')[0]}.xlsx`;
-                XLSX.writeFile(wb, filename);
-            }
-
-            exportCharts() {
-                const chart1 = document.getElementById('chartLateMonth');
-                const chart2 = document.getElementById('chartDistribution');
-                
-                if (chart1) {
-                    const link = document.createElement('a');
-                    link.download = `Tren_Keterlambatan_${new Date().toISOString().split('T')[0]}.png`;
-                    link.href = chart1.toDataURL('image/png');
-                    link.click();
-                }
-                
-                if (chart2) {
-                    setTimeout(() => { // Kasih jeda sedikit agar tidak bentrok di browser
-                        const link2 = document.createElement('a');
-                        link2.download = `Komposisi_Kehadiran_${new Date().toISOString().split('T')[0]}.png`;
-                        link2.href = chart2.toDataURL('image/png');
-                        link2.click();
-                    }, 500);
-                }
-            }
-
-            async clearOldStats() {
-                const confirmation = prompt(
-                    "PERINGATAN TUTUP BUKU!\n\n" +
-                    "Tindakan ini akan menghapus permanen SEMUA data presensi & izin yang terjadi SEBELUM tanggal 1 bulan ini.\n\n" +
-                    "Pastikan Anda telah melakukan 'Ekspor Excel' & 'Simpan Grafik' sebelum menghapus.\n\n" +
-                    "Ketik 'HAPUS' jika Anda yakin:"
-                );
-
-                if (confirmation !== 'HAPUS') {
-                    if (confirmation !== null) alert("Kata kunci salah. Penghapusan dibatalkan.");
-                    return;
-                }
-
-                const btn = document.getElementById('btn-clear-stats');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> Memproses...';
-                btn.disabled = true;
-
-                try {
-                    // Batas waktu: Hari pertama bulan ini
-                    const now = new Date();
-                    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    
-                    const attSnap = await getDocs(collection(db, PATH_ATTENDANCE));
-                    const izinSnap = await getDocs(collection(db, PATH_IZIN));
-
-                    let deletedCount = 0;
-
-                    const processDocs = async (snap) => {
-                        const deletePromises = [];
-                        snap.forEach(d => {
-                            const data = d.data();
-                            // Prioritaskan ID format (YYYY-MM-DD_NIS) karena paling konsisten
-                            const dateString = d.id.split('_')[0]; 
-                            if (dateString) {
-                                const docDate = new Date(dateString);
-                                if (docDate < startOfCurrentMonth) {
-                                    deletePromises.push(deleteDoc(d.ref));
-                                    deletedCount++;
-                                }
-                            }
-                        });
-                        await Promise.all(deletePromises);
-                    };
-
-                    await processDocs(attSnap);
-                    await processDocs(izinSnap);
-
-                    alert(`Tutup Buku Berhasil!\n${deletedCount} data dari bulan-bulan sebelumnya telah dihapus.`);
-                    
-                    // Refresh data dan statistik di layar
-                    this.generateStatistics();
-
-                } catch(e) {
-                    console.error("Gagal menghapus data lama:", e);
-                    alert("Gagal menghapus data: " + e.message);
-                } finally {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            }
-
-            // --- EDIT STATUS & DELETE ---
             openEditModal(itemStr) {
                 const item = JSON.parse(decodeURIComponent(itemStr));
                 this.currentEditItem = item;
@@ -1545,7 +1316,6 @@
                 } catch(e) { alert("Gagal ubah status: " + e.message); }
             }
 
-            // --- PROOF VIEWER & ZOOM ---
             viewProof(url, caption) {
                 const img = document.getElementById('proof-image');
                 img.src = url;
@@ -1571,10 +1341,42 @@
                 if (e.deltaY < 0) this.zoomIn(); else this.zoomOut();
             }
 
+            async cleanOldEvidence() {
+                if (!this.user || !confirm("Yakin ingin menghapus data bukti izin yang lebih dari 30 hari? Tindakan ini tidak bisa dibatalkan.")) return;
+                
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Memproses...';
+
+                try {
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    
+                    const snap = await getDocs(collection(db, PATH_IZIN));
+                    let count = 0;
+                    
+                    for (const d of snap.docs) {
+                        const data = d.data();
+                        if (data.timestamp && new Date(data.timestamp.seconds * 1000) < thirtyDaysAgo) {
+                            await deleteDoc(d.ref);
+                            count++;
+                        }
+                    }
+                    
+                    alert(`Berhasil menghapus ${count} data bukti izin lama.`);
+                } catch (e) {
+                    console.error("Cleanup Error:", e);
+                    alert("Gagal membersihkan data: " + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
             // --- REPORT (Diperbarui dengan Filter Tanggal & Komparasi) ---
             
             switchReportTab(tabId) {
-                // Reset semua warna tombol
                 ['individu', 'kelas', 'komparasi'].forEach(id => {
                     document.getElementById('report-area-' + id).classList.add('hidden');
                     const btn = document.getElementById('btn-rep-' + id);
@@ -1582,23 +1384,20 @@
                     btn.classList.add('bg-slate-800', 'text-slate-400');
                 });
                 
-                // Aktifkan tab yang dipilih
                 document.getElementById('report-area-' + tabId).classList.remove('hidden');
                 const activeBtn = document.getElementById('btn-rep-' + tabId);
                 activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
                 activeBtn.classList.add('bg-indigo-600', 'text-white', 'font-bold');
 
-                // Isi daftar siswa jika tab individu dipilih
                 if (tabId === 'individu') {
-                    const select = document.getElementById('report-student-select');
-                    if (select.options.length <= 1) {
-                        select.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+                    const datalist = document.getElementById('student-datalist');
+                    if (datalist && datalist.options.length === 0) {
                         Array.from(this.studentMap.entries())
                             .sort((a,b) => (a[1].nama || "").localeCompare(b[1].nama || ""))
                             .forEach(([nis, s]) => {
                                 const opt = document.createElement('option');
-                                opt.value = nis; opt.innerText = `${s.nama} (${nis}) - Kelas ${s.kelas}`;
-                                select.appendChild(opt);
+                                opt.value = `${nis} | ${s.nama} - Kelas ${s.kelas}`;
+                                datalist.appendChild(opt);
                             });
                     }
                 }
@@ -1613,7 +1412,6 @@
                     return null;
                 }
 
-                // Mengambil data secara lengkap agar akurat
                 const attSnap = await getDocs(collection(db, PATH_ATTENDANCE));
                 const izinSnap = await getDocs(collection(db, PATH_IZIN));
 
@@ -1625,15 +1423,19 @@
                 const attendance = attSnap.docs.map(d => ({id: d.id, ...d.data()})).filter(filterByDate);
                 const izin = izinSnap.docs.map(d => ({id: d.id, ...d.data(), isIzin: true})).filter(filterByDate);
 
-                // Menghitung total hari aktif dalam rentang tersebut (berdasarkan data unik)
                 const uniqueDates = new Set([...attendance.map(a => a.id.split('_')[0]), ...izin.map(i => i.id.split('_')[0])]);
                 
                 return { attendance, izin, totalDays: uniqueDates.size || 1 };
             }
 
             async generateIndividualReport() {
-                const nis = document.getElementById('report-student-select').value;
-                if (!nis) return;
+                const inputVal = document.getElementById('report-student-input').value;
+                const nis = inputVal.split(' | ')[0].trim(); 
+                
+                if (!nis || !this.studentMap.has(nis)) {
+                    alert("Silakan ketik dan pilih nama siswa yang sesuai dari daftar.");
+                    return;
+                }
                 
                 const data = await this.fetchReportData();
                 if (!data) return;
@@ -1772,18 +1574,15 @@
                     return {
                         name: c.name,
                         totalTarget: c.totalTarget,
-                        // Persentase Spesifik (5 warna batang)
                         hadirPct: c.totalTarget > 0 ? (c.hadir / c.totalTarget) * 100 : 0,
                         telatPct: c.totalTarget > 0 ? (c.telat / c.totalTarget) * 100 : 0,
                         sakitPct: c.totalTarget > 0 ? (c.sakit / c.totalTarget) * 100 : 0,
                         izinPct: c.totalTarget > 0 ? (c.izin / c.totalTarget) * 100 : 0,
                         alphaPct: c.totalTarget > 0 ? (alpha / c.totalTarget) * 100 : 0,
-                        // Persentase Lama (Untuk chart baris atas)
                         overallHadirPct: c.totalTarget > 0 ? (present / c.totalTarget) * 100 : 0
                     };
                 }).filter(c => c.totalTarget !== 0);
 
-                // --- BAGIAN HIGHLIGHT LAMA ---
                 const copyData = [...compData];
                 copyData.sort((a,b) => b.overallHadirPct - a.overallHadirPct);
                 const bestHadir = copyData[0];
@@ -1800,19 +1599,14 @@
                     </div>
                 `;
 
-                // Render Chart Lama
                 this.renderComparisonChart(copyData.map(c => c.name), copyData.map(c => c.overallHadirPct), copyData.map(c => c.telatPct));
 
-                // --- PEMISAHAN PER TINGKATAN UNTUK 3 CHART BARU ---
-                // Fungsi untuk mengurutkan nama kelas (misal: X-1, X-2 ... X-11) dengan benar
                 const sortAlphaNum = (a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'});
                 
-                // Pastikan filter menangkap awalan Romawi yang tepat
                 const gradeXII = compData.filter(c => c.name.startsWith('XII')).sort(sortAlphaNum);
                 const gradeXI = compData.filter(c => c.name.startsWith('XI') && !c.name.startsWith('XII')).sort(sortAlphaNum);
                 const gradeX = compData.filter(c => c.name.startsWith('X') && !c.name.startsWith('XI') && !c.name.startsWith('XII')).sort(sortAlphaNum);
 
-                // Render ke 3 Canvas Baru
                 this.renderGradeChart('chartGradeX', gradeX);
                 this.renderGradeChart('chartGradeXI', gradeXI);
                 this.renderGradeChart('chartGradeXII', gradeXII);
@@ -1829,8 +1623,8 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: '% Total Kehadiran', data: hadirData, backgroundColor: '#10b981', borderRadius: 4 },
-                            { label: '% Keterlambatan', data: telatData, backgroundColor: '#f97316', borderRadius: 4 }
+                            { label: '% Total Kehadiran', data: hadirData, backgroundColor: '#ffffff', borderRadius: 4 },
+                            { label: '% Keterlambatan', data: telatData, backgroundColor: '#eab308', borderRadius: 4 }
                         ]
                     },
                     options: {
@@ -1848,7 +1642,6 @@
             renderGradeChart(canvasId, dataArr) {
                 const ctx = document.getElementById(canvasId).getContext('2d');
                 
-                // Gunakan properti dinamis untuk menyimpan instance agar grafik tidak tumpang tindih
                 if (this[`instance_${canvasId}`]) this[`instance_${canvasId}`].destroy();
 
                 const labels = dataArr.map(c => c.name);
@@ -1858,10 +1651,10 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: '% Hadir Tepat', data: dataArr.map(c => c.hadirPct), backgroundColor: '#10b981', borderRadius: 4 },
-                            { label: '% Terlambat', data: dataArr.map(c => c.telatPct), backgroundColor: '#f97316', borderRadius: 4 },
+                            { label: '% Hadir Tepat', data: dataArr.map(c => c.hadirPct), backgroundColor: '#ffffff', borderRadius: 4 },
+                            { label: '% Terlambat', data: dataArr.map(c => c.telatPct), backgroundColor: '#eab308', borderRadius: 4 },
+                            { label: '% Izin', data: dataArr.map(c => c.izinPct), backgroundColor: '#22c55e', borderRadius: 4 },
                             { label: '% Sakit', data: dataArr.map(c => c.sakitPct), backgroundColor: '#3b82f6', borderRadius: 4 },
-                            { label: '% Izin', data: dataArr.map(c => c.izinPct), backgroundColor: '#f59e0b', borderRadius: 4 },
                             { label: '% Alpha', data: dataArr.map(c => c.alphaPct), backgroundColor: '#ef4444', borderRadius: 4 }
                         ]
                     },
@@ -1886,15 +1679,21 @@
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'border-indigo-500', 'text-indigo-400'));
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('border-transparent', 'text-slate-500'));
                 
-                // Safety hide all possible content views
+                // Sembunyikan semua tab & hilangkan sifat mekarnya (flex)
                 ['live', 'statistics', 'class-report', 'data-student'].forEach(view => {
                     const el = document.getElementById('content-' + view);
-                    if(el) el.classList.add('hidden');
+                    if(el) {
+                        el.classList.add('hidden');
+                        el.classList.remove('flex'); 
+                    }
                 });
                 
-                // Show requested view
+                // Tampilkan tab yang diklik & paksakan sifat mekarnya (flex)
                 const target = document.getElementById('content-' + id);
-                if(target) target.classList.remove('hidden');
+                if(target) {
+                    target.classList.remove('hidden');
+                    target.classList.add('flex'); 
+                }
                 
                 // Style active tab
                 const activeTab = document.getElementById('tab-' + id);
@@ -1903,8 +1702,138 @@
                     activeTab.classList.remove('border-transparent', 'text-slate-500');
                 }
 
-                if(id === 'data-student') this.fetchStudents();
+                if(id === 'data-student') {
+                    // Cerdas menarik data: hanya unduh jika memori kosong
+                    if(this.studentMap.size === 0) this.fetchStudents();
+                    else this.renderStudentList(); 
+                }
                 if(id === 'statistics') this.generateStatistics();
+                if(id === 'class-report') this.switchReportTab('individu'); 
+            }
+
+            exportStatsData() {
+                if (!this.currentStats) return alert("Harap tunggu hingga data statistik selesai dimuat.");
+
+                const { studentLateCount, studentLateDuration } = this.currentStats;
+
+                const topFreq = Object.entries(studentLateCount)
+                    .sort((a,b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .map(([nis, count], i) => {
+                        const s = this.studentMap.get(nis) || {};
+                        return {
+                            "Peringkat": i + 1,
+                            "NIS": nis,
+                            "Nama Siswa": s.nama || "Unknown",
+                            "Kelas": s.kelas || "-",
+                            "Frekuensi (Kali)": count
+                        };
+                    });
+
+                const topDur = Object.entries(studentLateDuration)
+                    .sort((a,b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .map(([nis, mins], i) => {
+                        const s = this.studentMap.get(nis) || {};
+                        return {
+                            "Peringkat": i + 1,
+                            "NIS": nis,
+                            "Nama Siswa": s.nama || "Unknown",
+                            "Kelas": s.kelas || "-",
+                            "Total Durasi (Menit)": mins
+                        };
+                    });
+
+                if (topFreq.length === 0) topFreq.push({"Info": "Tidak ada data keterlambatan."});
+                if (topDur.length === 0) topDur.push({"Info": "Tidak ada data keterlambatan."});
+
+                const wb = XLSX.utils.book_new();
+                const wsFreq = XLSX.utils.json_to_sheet(topFreq);
+                const wsDur = XLSX.utils.json_to_sheet(topDur);
+                
+                XLSX.utils.book_append_sheet(wb, wsFreq, "Top 10 Frekuensi");
+                XLSX.utils.book_append_sheet(wb, wsDur, "Top 10 Durasi");
+                
+                const filename = `Statistik_Keterlambatan_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, filename);
+            }
+
+            exportCharts() {
+                const chart1 = document.getElementById('chartLateMonth');
+                const chart2 = document.getElementById('chartDistribution');
+                
+                if (chart1) {
+                    const link = document.createElement('a');
+                    link.download = `Tren_Keterlambatan_${new Date().toISOString().split('T')[0]}.png`;
+                    link.href = chart1.toDataURL('image/png');
+                    link.click();
+                }
+                
+                if (chart2) {
+                    setTimeout(() => { 
+                        const link2 = document.createElement('a');
+                        link2.download = `Komposisi_Kehadiran_${new Date().toISOString().split('T')[0]}.png`;
+                        link2.href = chart2.toDataURL('image/png');
+                        link2.click();
+                    }, 500);
+                }
+            }
+
+            async clearOldStats() {
+                const confirmation = prompt(
+                    "PERINGATAN TUTUP BUKU!\n\n" +
+                    "Tindakan ini akan menghapus permanen SEMUA data presensi & izin yang terjadi SEBELUM tanggal 1 bulan ini.\n\n" +
+                    "Pastikan Anda telah melakukan 'Ekspor Excel' & 'Simpan Grafik' sebelum menghapus.\n\n" +
+                    "Ketik 'HAPUS' jika Anda yakin:"
+                );
+
+                if (confirmation !== 'HAPUS') {
+                    if (confirmation !== null) alert("Kata kunci salah. Penghapusan dibatalkan.");
+                    return;
+                }
+
+                const btn = document.getElementById('btn-clear-stats');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> Memproses...';
+                btn.disabled = true;
+
+                try {
+                    const now = new Date();
+                    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                    
+                    const attSnap = await getDocs(collection(db, PATH_ATTENDANCE));
+                    const izinSnap = await getDocs(collection(db, PATH_IZIN));
+
+                    let deletedCount = 0;
+
+                    const processDocs = async (snap) => {
+                        const deletePromises = [];
+                        snap.forEach(d => {
+                            const dateString = d.id.split('_')[0]; 
+                            if (dateString) {
+                                const docDate = new Date(dateString);
+                                if (docDate < startOfCurrentMonth) {
+                                    deletePromises.push(deleteDoc(d.ref));
+                                    deletedCount++;
+                                }
+                            }
+                        });
+                        await Promise.all(deletePromises);
+                    };
+
+                    await processDocs(attSnap);
+                    await processDocs(izinSnap);
+
+                    alert(`Tutup Buku Berhasil!\n${deletedCount} data dari bulan-bulan sebelumnya telah dihapus.`);
+                    this.generateStatistics();
+
+                } catch(e) {
+                    console.error("Gagal menghapus data lama:", e);
+                    alert("Gagal menghapus data: " + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             }
 
             toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
