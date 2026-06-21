@@ -98,6 +98,9 @@
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
+	<!-- Pustaka Pembuat Word F4 -->
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
 
@@ -279,6 +282,7 @@
                             <input type="date" id="report-end-date" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white outline-none">
                         </div>
                     </div>
+						<button onclick="picketApp.exportWordIndividu()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition flex items-center gap-2" title="Cetak Word F4"><i class="ph ph-file-doc text-xl"></i> Cetak Word</button>
                 </div>
 
                 <div id="report-area-individu" class="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
@@ -304,6 +308,9 @@
                             </select>
                         </div>
                         <button onclick="picketApp.generateClassReport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition">Tampilkan</button>
+						<button onclick="picketApp.exportWordKelasHarian()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition flex items-center gap-2" title="Cetak Harian Word"><i class="ph ph-file-doc text-xl"></i> Harian</button>
+                        <button onclick="picketApp.exportWordKelasPeriode()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-3 rounded-xl font-bold transition flex items-center gap-2" title="Cetak Periode Word"><i class="ph ph-file-doc text-xl"></i> Periode</button>
+						<button onclick="picketApp.exportWordRekapSekolah()" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-4 py-3 rounded-xl font-bold transition flex items-center gap-2 shadow-lg border border-fuchsia-400" title="Cetak Rekap 1 Sekolah"><i class="ph ph-printer text-xl"></i> Rekap Sekolah</button>
                     </div>
                     <div id="class-report-result" class="flex-1 overflow-y-auto space-y-4 hidden custom-scrollbar">
                          </div>
@@ -375,6 +382,18 @@
                     <p id="edit-student-nis" class="text-xs text-slate-500 font-mono">NIS: 12345</p>
                 </div>
                 <div>
+					<div class="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Catatan Pelanggaran (Opsional)</label>
+                    <select id="edit-pelanggaran-select" class="w-full mb-2 p-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-indigo-500" onchange="if(this.value==='Lainnya') document.getElementById('edit-pelanggaran-manual').classList.remove('hidden'); else document.getElementById('edit-pelanggaran-manual').classList.add('hidden');">
+                        <option value="">-- Tidak Ada Pelanggaran --</option>
+                        <option value="Tidak menggunakan sepatu hitam">Tidak menggunakan sepatu hitam</option>
+                        <option value="Seragam tidak sesuai tata tertib">Seragam tidak sesuai tata tertib</option>
+                        <option value="Rambut panjang/tidak rapi">Rambut panjang/tidak rapi</option>
+                        <option value="Atribut tidak lengkap">Atribut tidak lengkap (topi/dasi/sabuk)</option>
+                        <option value="Lainnya">Lainnya (Ketik Manual)...</option>
+                    </select>
+                    <input type="text" id="edit-pelanggaran-manual" placeholder="Ketik jenis pelanggaran..." class="hidden w-full p-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-indigo-500">
+                </div>
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Status Baru</label>
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="picketApp.selectStatus('Tepat Waktu')" class="status-opt p-3 rounded-xl border border-slate-200 text-sm font-bold hover:bg-emerald-50 hover:border-emerald-500 text-emerald-600 transition">Hadir (Tepat)</button>
@@ -382,9 +401,14 @@
                         <button onclick="picketApp.selectStatus('s')" class="status-opt p-3 rounded-xl border border-slate-200 text-sm font-bold hover:bg-blue-50 hover:border-blue-500 text-blue-600 transition">Sakit</button>
                         <button onclick="picketApp.selectStatus('i')" class="status-opt p-3 rounded-xl border border-slate-200 text-sm font-bold hover:bg-blue-50 hover:border-blue-500 text-blue-600 transition">Izin</button>
                     </div>
-                    <button onclick="picketApp.selectStatus('alpha')" class="mt-2 w-full p-3 rounded-xl border border-red-200 text-sm font-bold hover:bg-red-50 hover:border-red-500 text-red-600 transition flex items-center justify-center gap-2">
+                    <!-- MULAI PERBAIKAN TOMBOL SIMPAN -->
+                    <button onclick="picketApp.selectStatus(picketApp.currentEditItem.isIzin ? picketApp.currentEditItem.tipe : picketApp.currentEditItem.status)" class="w-full mt-2 mb-2 p-3 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition shadow-lg">
+                        Simpan Perubahan
+                    </button>
+                    <button onclick="picketApp.selectStatus('alpha')" class="w-full p-3 rounded-xl border border-red-200 text-sm font-bold hover:bg-red-50 hover:border-red-500 text-red-600 transition flex items-center justify-center gap-2">
                         <i class="ph ph-trash"></i> Hapus (Alpha)
                     </button>
+                    <!-- AKHIR PERBAIKAN -->
                 </div>
             </div>
         </div>
@@ -413,6 +437,19 @@
                 </div>
 
                 <div id="manual-action-buttons" class="hidden">
+					<div class="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Catatan Pelanggaran (Opsional)</label>
+                    <select id="manual-pelanggaran-select" class="w-full mb-2 p-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-indigo-500" onchange="if(this.value==='Lainnya') document.getElementById('manual-pelanggaran-manual').classList.remove('hidden'); else document.getElementById('manual-pelanggaran-manual').classList.add('hidden');">
+                        <option value="">-- Tidak Ada Pelanggaran --</option>
+                        <option value="Tidak menggunakan sepatu hitam">Tidak menggunakan sepatu hitam</option>
+                        <option value="Seragam tidak sesuai tata tertib">Seragam tidak sesuai tata tertib</option>
+                        <option value="Rambut panjang/tidak rapi">Rambut panjang/tidak rapi</option>
+                        <option value="Atribut tidak lengkap">Atribut tidak lengkap (topi/dasi/sabuk)</option>
+                        <option value="Lainnya">Lainnya (Ketik Manual)...</option>
+                    </select>
+                    <input type="text" id="manual-pelanggaran-manual" placeholder="Ketik jenis pelanggaran..." class="hidden w-full p-2 rounded-lg border border-slate-300 text-xs outline-none focus:border-indigo-500">
+                </div>
+
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Pilih Status Kehadiran</label>
                     <div class="grid grid-cols-2 gap-3">
                         <button onclick="picketApp.submitManualAttendance('Tepat Waktu')" class="p-4 rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold hover:bg-emerald-200 transition">
@@ -454,6 +491,20 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Batas Jam Masuk (WIB)</label>
                     <input type="time" id="setting-late-time" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-mono text-center">
+                </div>
+				<label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 mt-4">Nama Instansi / Sekolah</label>
+                <input type="text" id="setting-sekolah-nama" placeholder="Contoh: SMA Negeri 1 Bandung" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-4 outline-none focus:border-indigo-500">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Kepala Sekolah</label>
+                        <input type="text" id="setting-kepsek-nama" placeholder="Nama Kepsek" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-2 outline-none focus:border-indigo-500">
+                        <input type="text" id="setting-kepsek-nip" placeholder="NIP Kepsek" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Petugas Piket</label>
+                        <input type="text" id="setting-piket-nama" placeholder="Nama Petugas" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm mb-2 outline-none focus:border-indigo-500">
+                        <input type="text" id="setting-piket-nip" placeholder="NIP Petugas" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                    </div>
                 </div>
                 <button onclick="picketApp.saveSettings()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100">Simpan Konfigurasi</button>
                 
@@ -499,6 +550,13 @@
                 const el = document.getElementById(id);
                 if(el) el.src = LOGO_URL;
             });
+            
+            // Setel tanggal default laporan ke hari ini
+            const today = (new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
+            const startDateEl = document.getElementById('report-start-date');
+            const endDateEl = document.getElementById('report-end-date');
+            if(startDateEl) startDateEl.value = today;
+            if(endDateEl) endDateEl.value = today;
         });
 
         const chartBgPlugin = {
@@ -579,8 +637,16 @@
                 try {
                     const snap = await getDoc(doc(db, PATH_CONFIG, 'settings'));
                     if(snap.exists()) {
-                        this.lateThreshold = snap.data().lateThreshold || "07:00";
+                        const data = snap.data();
+                        this.lateThreshold = data.lateThreshold || "07:00";
                         document.getElementById('setting-late-time').value = this.lateThreshold;
+                        
+                        // Tambahan Tahap 2: Menampilkan data tanda tangan jika sudah ada
+						if(data.namaSekolah) document.getElementById('setting-sekolah-nama').value = data.namaSekolah;
+                        if(data.kepsekNama) document.getElementById('setting-kepsek-nama').value = data.kepsekNama;
+                        if(data.kepsekNip) document.getElementById('setting-kepsek-nip').value = data.kepsekNip;
+                        if(data.piketNama) document.getElementById('setting-piket-nama').value = data.piketNama;
+                        if(data.piketNip) document.getElementById('setting-piket-nip').value = data.piketNip;
                     }
                 } catch(e) { console.error("Fetch Settings Error:", e); }
             }
@@ -785,7 +851,7 @@
 
             startLiveMonitor() {
                 if (!this.user) return;
-                const today = new Date().toISOString().split('T')[0];
+                const today = (new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
                 
                 const collAttendance = collection(db, PATH_ATTENDANCE);
                 const collIzin = collection(db, PATH_IZIN);
@@ -829,7 +895,7 @@
                 let message = "";
                 
                 if (type === 'alpha') {
-                    message = `Yth. Wali Murid,\nKami informasikan bahwa siswa atas nama *${name}* *BELUM HADIR* di sekolah tanpa keterangan hingga pukul ${time} WIB.\nMohon konfirmasinya apakah siswa Sakit, Izin, atau ada kendala lain.\n\nAdmin Piket`;
+                    message = `Yth. Bapak/Ibu Wali Murid dari puter/i *${name}*.\n\nKami dari Admin Piket menginformasikan bahwa hingga pukul ${time} WIB, putra/putri Bapak/Ibu *BELUM TERCATAT HADIR* di sekolah dan belum ada pemberitahuan (Alpha).\n\nMohon konfirmasinya apakah putera/i sedang sakit, izin, atau ada kendala lain di perjalanan. Informasi dari Bapak/Ibu sangat penting bagi kami untuk memastikan keselamatan putera/i Bpk/Ibu.\n\nTerima kasih atas perhatian dan kerjasamanya.\n\nSalam,\nAdmin Piket`;
                 } else if (type === 's') {
                     message = `Yth. Wali Murid,\nKami telah menerima informasi bahwa siswa atas nama *${name}* hari ini *IZIN SAKIT*.\nSemoga lekas sembuh dan dapat kembali belajar. Terima kasih.\n\nTetapi jika hal tersebut tanpa sepengetahuan Bpk/Ibu, mohon segera hubungi anak Bpk/Ibu untuk memastikan keberadaannya.\n\nTerima kasih atas perhatian dan kerjasamanya\n\nAdmin Piket`;
                 } else if (type === 'i') {
@@ -872,22 +938,26 @@
                             ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">${item.tipe === 's' ? 'SAKIT' : 'IZIN'}</span>`
                             : `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${isLate ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">${item.status}</span>`;
 
-                        let waType = 'late';
-                        let waTitle = 'Info Terlambat';
-                        if (isIzin) {
-                            waType = item.tipe;
-                            waTitle = item.tipe === 's' ? 'Konfirmasi Sakit' : 'Konfirmasi Izin';
-                        }
+                        const isAlpha = item.status === 'alpha'; 
+                            let waType = 'late';
+                            let waTitle = 'Info Terlambat';
+                            if (isIzin) {
+                                waType = item.tipe;
+                                waTitle = item.tipe === 's' ? 'Konfirmasi Sakit' : 'Konfirmasi Izin';
+                            } else if (isAlpha) {
+                                waType = 'alpha';
+                                waTitle = 'Konfirmasi Alpha';
+                            }
 
-                        const isWaSent = item.wa_sent === true;
-                        const waBtnColor = isWaSent 
-                            ? "bg-slate-700 text-slate-400 cursor-not-allowed" 
-                            : "bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white";
-                        const waIcon = isWaSent ? "ph-check" : "ph-whatsapp-logo";
-                        const waTooltip = isWaSent ? "WA Sudah Terkirim" : `Kirim WA: ${waTitle}`;
-                        const waAction = isWaSent ? "" : `onclick="picketApp.sendWA('${parentPhone}', '${student.nama}', '${timeStr}', '${waType}', '${item.id}', ${isIzin})"`
+                            const isWaSent = item.wa_sent === true;
+                            const waBtnColor = isWaSent 
+                                ? "bg-slate-700 text-slate-400 cursor-not-allowed" 
+                                : "bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white";
+                            const waIcon = isWaSent ? "ph-check" : "ph-whatsapp-logo";
+                            const waTooltip = isWaSent ? "WA Sudah Terkirim" : `Kirim WA: ${waTitle}`;
+                            const waAction = isWaSent ? "" : `onclick="picketApp.sendWA('${parentPhone}', '${student.nama}', '${timeStr}', '${waType}', '${item.id}', ${isIzin})"`;
 
-                        const showWaBtn = isLate || isIzin;
+                            const showWaBtn = isLate || isIzin || isAlpha;
                         const waButton = showWaBtn 
                             ? `<button ${waAction} class="w-8 h-8 flex items-center justify-center ${waBtnColor} rounded-lg transition" title="${waTooltip}">
                                 <i class="ph ${waIcon} text-lg"></i>
@@ -948,6 +1018,12 @@
                 document.getElementById('manual-search-results').classList.add('hidden');
                 document.getElementById('manual-selected-container').classList.add('hidden');
                 document.getElementById('manual-action-buttons').classList.add('hidden');
+                
+                // Tambahan Tahap 2: Mengosongkan isian pelanggaran setiap kali jendela dibuka
+                document.getElementById('manual-pelanggaran-select').value = '';
+                document.getElementById('manual-pelanggaran-manual').value = '';
+                document.getElementById('manual-pelanggaran-manual').classList.add('hidden');
+                
                 this.manualSelectedStudent = null;
             }
 
@@ -1003,8 +1079,14 @@
                 if (!this.manualSelectedStudent) return;
                 
                 const { nis, nama, kelas } = this.manualSelectedStudent;
-                const today = new Date().toISOString().split('T')[0];
+                const today = (new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
                 const docId = `${today}_${nis}`;
+
+                // Tambahan Tahap 2: Mengambil teks pelanggaran
+                let notePelanggaran = document.getElementById('manual-pelanggaran-select').value;
+                if(notePelanggaran === 'Lainnya') {
+                    notePelanggaran = document.getElementById('manual-pelanggaran-manual').value;
+                }
 
                 try {
                     const docSnap = await getDoc(doc(db, PATH_ATTENDANCE, docId));
@@ -1016,11 +1098,12 @@
                         nis, nama, kelas,
                         status: status,
                         timestamp: serverTimestamp(),
-                        method: 'manual' 
+                        method: 'manual',
+                        pelanggaran: notePelanggaran // Disimpan ke database
                     });
 
                     this.closeModal('modal-manual');
-                    alert(`Berhasil input manual: ${nama} (${status})`);
+                    alert(`Berhasil input: ${nama} (${status})`);
 
                 } catch (e) {
                     console.error("Manual input error:", e);
@@ -1049,7 +1132,9 @@
                             const monthKey = date.toLocaleString('id-ID', { month: 'long' });
                             monthlyStats[monthKey] = (monthlyStats[monthKey] || 0) + 1;
 
-                            const dayKey = date.toISOString().split('T')[0]; 
+                            // Perbaikan Zona Waktu untuk Grafik
+                            const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                            const dayKey = localDate.toISOString().split('T')[0]; 
                             dailyStats[dayKey] = (dailyStats[dayKey] || 0) + 1;
                             
                             const weekKey = this.getWeekNumber(date);
@@ -1272,6 +1357,26 @@
                 this.currentEditItem = item;
                 document.getElementById('edit-student-name').innerText = item.studentName;
                 document.getElementById('edit-student-nis').innerText = "NIS: " + item.nis;
+                
+                // Tambahan Tahap 2: Menampilkan pelanggaran jika sebelumnya sudah pernah dicatat
+                const selectEl = document.getElementById('edit-pelanggaran-select');
+                const manualEl = document.getElementById('edit-pelanggaran-manual');
+                if (item.pelanggaran) {
+                    const options = Array.from(selectEl.options).map(o => o.value);
+                    if (options.includes(item.pelanggaran)) {
+                        selectEl.value = item.pelanggaran;
+                        manualEl.classList.add('hidden');
+                    } else {
+                        selectEl.value = 'Lainnya';
+                        manualEl.value = item.pelanggaran;
+                        manualEl.classList.remove('hidden');
+                    }
+                } else {
+                    selectEl.value = '';
+                    manualEl.value = '';
+                    manualEl.classList.add('hidden');
+                }
+
                 document.getElementById('modal-edit').classList.remove('hidden');
             }
 
@@ -1289,10 +1394,19 @@
                 if(!this.currentEditItem) return;
                 const { nis, id, isIzin } = this.currentEditItem;
                 const student = this.studentMap.get(nis) || {};
-                const today = new Date().toISOString().split('T')[0];
+                const today = (new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
                 const docId = `${today}_${nis}`;
 
                 this.closeModal('modal-edit');
+
+                // Tambahan Tahap 2: Mengambil teks pelanggaran
+                let notePelanggaran = document.getElementById('edit-pelanggaran-select').value;
+                if(notePelanggaran === 'Lainnya') {
+                    notePelanggaran = document.getElementById('edit-pelanggaran-manual').value;
+                }
+                
+                // Mempertahankan jam asli absen agar tidak berubah jika petugas hanya menambah pelanggaran
+                const originalWaktu = this.currentEditItem.timestamp || serverTimestamp();
 
                 try {
                     const oldColl = isIzin ? PATH_IZIN : PATH_ATTENDANCE;
@@ -1304,13 +1418,15 @@
                         await setDoc(doc(db, PATH_IZIN, docId), {
                             nis, nama: student.nama, kelas: student.kelas,
                             tipe: newStatus, alasan: "Diubah oleh Admin Piket",
-                            timestamp: serverTimestamp()
+                            timestamp: originalWaktu,
+                            pelanggaran: notePelanggaran
                         });
                     } else {
                         await setDoc(doc(db, PATH_ATTENDANCE, docId), {
                             nis, nama: student.nama, kelas: student.kelas,
                             status: newStatus,
-                            timestamp: serverTimestamp()
+                            timestamp: originalWaktu,
+                            pelanggaran: notePelanggaran
                         });
                     }
                 } catch(e) { alert("Gagal ubah status: " + e.message); }
@@ -1516,28 +1632,97 @@
                     .map(([id, s]) => ({ id, ...s }));
 
                 let stats = { totalSiswa: studentsInClass.length, hadir: 0, telat: 0, sakit: 0, izin: 0, alpha: 0 };
-                const totalTarget = stats.totalSiswa * data.totalDays;
+                
+                // Menyiapkan wadah untuk daftar nama siswa
+                let alphaList = [];
+                let sakitList = [];
+                let izinList = [];
 
-                data.attendance.filter(a => a.kelas === kelas).forEach(a => {
-                    if (a.status === 'Terlambat') stats.telat++; else stats.hadir++;
+                // Mengurai rentang tanggal yang dipilih
+                const startVal = document.getElementById('report-start-date').value;
+                const endVal = document.getElementById('report-end-date').value;
+                const datesToFetch = [];
+                let currDate = new Date(startVal + 'T00:00:00');
+                const endDate = new Date(endVal + 'T00:00:00');
+                
+                while(currDate <= endDate) {
+                    const y = currDate.getFullYear();
+                    const m = String(currDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(currDate.getDate()).padStart(2, '0');
+                    datesToFetch.push(`${y}-${m}-${d}`);
+                    currDate.setDate(currDate.getDate() + 1);
+                }
+
+                const totalTarget = stats.totalSiswa * datesToFetch.length;
+
+                // Periksa status setiap siswa di setiap tanggal
+                studentsInClass.forEach(s => {
+                    datesToFetch.forEach(dateStr => {
+                        const attRecord = data.attendance.find(a => a.nis === s.id && a.id.startsWith(dateStr));
+                        const izinRecord = data.izin.find(i => i.nis === s.id && i.id.startsWith(dateStr));
+
+                        if (attRecord) {
+                            if (attRecord.status === 'Terlambat') stats.telat++; 
+                            else stats.hadir++;
+                        } else if (izinRecord) {
+                            if (izinRecord.tipe === 's') {
+                                stats.sakit++;
+                                sakitList.push({ ...s, date: dateStr });
+                            } else {
+                                stats.izin++;
+                                izinList.push({ ...s, date: dateStr });
+                            }
+                        } else {
+                            stats.alpha++;
+                            alphaList.push({ ...s, date: dateStr });
+                        }
+                    });
                 });
 
-                data.izin.filter(i => i.kelas === kelas).forEach(i => {
-                    if (i.tipe === 's') stats.sakit++; else stats.izin++;
-                });
+                const getPct = (val) => totalTarget > 0 ? ((val / totalTarget) * 100).toFixed(1) + '%' : '0%';
 
-                stats.alpha = Math.max(0, totalTarget - (stats.hadir + stats.telat + stats.sakit + stats.izin));
-                const getPct = (val) => ((val / totalTarget) * 100).toFixed(1) + '%';
+                // Fungsi pembuat baris nama dan tombol WA
+                const renderList = (list, type) => {
+                    if(list.length === 0) return '<div class="text-[10px] italic text-slate-500">Nihil (Kosong).</div>';
+                    return list.map(item => {
+                        const parentPhone = item.hp_ortu || item.no_hp || '';
+                        return `
+                        <div class="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg border border-slate-700 mb-1 hover:bg-slate-700 transition">
+                            <div class="overflow-hidden pr-2">
+                                <span class="text-white text-xs font-bold truncate block">${item.nama}</span>
+                                <span class="text-slate-400 text-[10px] font-mono">${item.date}</span>
+                            </div>
+                            <button onclick="picketApp.sendWA('${parentPhone}', '${item.nama}', 'Batas Waktu', '${type}')" class="min-w-[2rem] w-8 h-8 flex items-center justify-center bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white rounded-lg transition" title="Kirim WA Konfirmasi">
+                                <i class="ph ph-whatsapp-logo text-lg"></i>
+                            </button>
+                        </div>`;
+                    }).join('');
+                };
 
                 const resDiv = document.getElementById('class-report-result');
                 resDiv.innerHTML = `
-                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3 mb-2">
                         <div class="p-3 bg-slate-900 rounded-2xl text-center"><span class="block text-xl font-bold">${stats.totalSiswa}</span><span class="text-[10px] text-slate-500">Siswa Aktif</span></div>
-                        <div class="p-3 bg-emerald-900/20 rounded-2xl text-center border border-emerald-900/30"><span class="block text-xl font-bold text-emerald-400">${getPct(stats.hadir)}</span><span class="text-[10px] text-emerald-500">Hadir Tepat</span></div>
-                        <div class="p-3 bg-orange-900/20 rounded-2xl text-center border border-orange-900/30"><span class="block text-xl font-bold text-orange-400">${getPct(stats.telat)}</span><span class="text-[10px] text-orange-500">Terlambat</span></div>
-                        <div class="p-3 bg-blue-900/20 rounded-2xl text-center border border-blue-900/30"><span class="block text-xl font-bold text-blue-400">${getPct(stats.sakit)}</span><span class="text-[10px] text-blue-500">Sakit</span></div>
-                        <div class="p-3 bg-amber-900/20 rounded-2xl text-center border border-amber-900/30"><span class="block text-xl font-bold text-amber-400">${getPct(stats.izin)}</span><span class="text-[10px] text-amber-500">Izin</span></div>
-                        <div class="p-3 bg-red-900/20 rounded-2xl text-center border border-red-900/30"><span class="block text-xl font-bold text-red-400">${getPct(stats.alpha)}</span><span class="text-[10px] text-red-500">Alpha</span></div>
+                        <div class="p-3 bg-emerald-900/20 rounded-2xl text-center border border-emerald-900/30"><span class="block text-xl font-bold text-emerald-400">${stats.hadir} <span class="text-[11px] opacity-70">(${getPct(stats.hadir)})</span></span><span class="text-[10px] text-emerald-500">Hadir Tepat</span></div>
+                        <div class="p-3 bg-orange-900/20 rounded-2xl text-center border border-orange-900/30"><span class="block text-xl font-bold text-orange-400">${stats.telat} <span class="text-[11px] opacity-70">(${getPct(stats.telat)})</span></span><span class="text-[10px] text-orange-500">Terlambat</span></div>
+                        <div class="p-3 bg-blue-900/20 rounded-2xl text-center border border-blue-900/30"><span class="block text-xl font-bold text-blue-400">${stats.sakit} <span class="text-[11px] opacity-70">(${getPct(stats.sakit)})</span></span><span class="text-[10px] text-blue-500">Sakit</span></div>
+                        <div class="p-3 bg-amber-900/20 rounded-2xl text-center border border-amber-900/30"><span class="block text-xl font-bold text-amber-400">${stats.izin} <span class="text-[11px] opacity-70">(${getPct(stats.izin)})</span></span><span class="text-[10px] text-amber-500">Izin</span></div>
+                        <div class="p-3 bg-red-900/20 rounded-2xl text-center border border-red-900/30"><span class="block text-xl font-bold text-red-400">${stats.alpha} <span class="text-[11px] opacity-70">(${getPct(stats.alpha)})</span></span><span class="text-[10px] text-red-500">Alpha</span></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                        <div class="bg-red-900/10 p-4 rounded-2xl border border-red-900/30">
+                            <h4 class="text-xs font-bold text-red-400 uppercase mb-3 border-b border-red-900/30 pb-2">Daftar Alpha</h4>
+                            <div class="space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-2">${renderList(alphaList, 'alpha')}</div>
+                        </div>
+                        <div class="bg-blue-900/10 p-4 rounded-2xl border border-blue-900/30">
+                            <h4 class="text-xs font-bold text-blue-400 uppercase mb-3 border-b border-blue-900/30 pb-2">Daftar Sakit</h4>
+                            <div class="space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-2">${renderList(sakitList, 's')}</div>
+                        </div>
+                        <div class="bg-amber-900/10 p-4 rounded-2xl border border-amber-900/30">
+                            <h4 class="text-xs font-bold text-amber-400 uppercase mb-3 border-b border-amber-900/30 pb-2">Daftar Izin</h4>
+                            <div class="space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-2">${renderList(izinList, 'i')}</div>
+                        </div>
                     </div>
                 `;
                 resDiv.classList.remove('hidden');
@@ -1754,7 +1939,7 @@
                 XLSX.utils.book_append_sheet(wb, wsFreq, "Top 10 Frekuensi");
                 XLSX.utils.book_append_sheet(wb, wsDur, "Top 10 Durasi");
                 
-                const filename = `Statistik_Keterlambatan_${new Date().toISOString().split('T')[0]}.xlsx`;
+                const filename = `Statistik_Keterlambatan_${(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])}.xlsx`;
                 XLSX.writeFile(wb, filename);
             }
 
@@ -1764,7 +1949,7 @@
                 
                 if (chart1) {
                     const link = document.createElement('a');
-                    link.download = `Tren_Keterlambatan_${new Date().toISOString().split('T')[0]}.png`;
+                    link.download = `Tren_Keterlambatan_${(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])}.png`;
                     link.href = chart1.toDataURL('image/png');
                     link.click();
                 }
@@ -1772,7 +1957,7 @@
                 if (chart2) {
                     setTimeout(() => { 
                         const link2 = document.createElement('a');
-                        link2.download = `Komposisi_Kehadiran_${new Date().toISOString().split('T')[0]}.png`;
+                        link2.download = `Komposisi_Kehadiran_${(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])}.png`;
                         link2.href = chart2.toDataURL('image/png');
                         link2.click();
                     }, 500);
@@ -1841,14 +2026,519 @@
             async saveSettings() {
                 if (!this.user) return;
                 const time = document.getElementById('setting-late-time').value;
+                
+                // Tambahan Tahap 2: Mengambil nilai tanda tangan
+                const nSekolah = document.getElementById('setting-sekolah-nama').value;
+                const kNama = document.getElementById('setting-kepsek-nama').value;
+                const kNip = document.getElementById('setting-kepsek-nip').value;
+                const pNama = document.getElementById('setting-piket-nama').value;
+                const pNip = document.getElementById('setting-piket-nip').value;
+
                 try {
-                    await setDoc(doc(db, PATH_CONFIG, 'settings'), { lateThreshold: time });
+                    await setDoc(doc(db, PATH_CONFIG, 'settings'), { 
+                        lateThreshold: time,
+                        namaSekolah: nSekolah,
+                        kepsekNama: kNama,
+                        kepsekNip: kNip,
+                        piketNama: pNama,
+                        piketNip: pNip
+                    });
                     this.lateThreshold = time;
                     this.toggleModal('modal-settings', false);
-                    alert("Pengaturan Berhasil Disimpan!");
+                    alert("Pengaturan & Tanda Tangan Berhasil Disimpan!");
                 } catch(e) { console.error(e); }
             }
             openSettings() { this.toggleModal('modal-settings', true); }
+			// ============================================================================
+            // MULAI TAMBAHAN TAHAP 3: MESIN PEMBUAT WORD (UKURAN F4 / FOLIO)
+            // ============================================================================
+            
+            // Fungsi Pembantu: Membuat Dokumen F4
+            createF4Doc(childrenElements) {
+                const { Document } = docx;
+                return new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                // 12240 x 18720 Twips = Persis Kertas F4 (8.5 x 13 Inci)
+                                size: { width: 12240, height: 18720 }, 
+                                margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+                            }
+                        },
+                        children: childrenElements
+                    }]
+                });
+            }
+
+            // Fungsi Pembantu: Membuat Bagian Tanda Tangan
+            createSignatureBlock() {
+                const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, AlignmentType, BorderStyle } = docx;
+                const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+                const borderSet = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+                
+                const kNama = document.getElementById('setting-kepsek-nama').value || "...........................";
+                const kNip = document.getElementById('setting-kepsek-nip').value || "...........................";
+                const pNama = document.getElementById('setting-piket-nama').value || "...........................";
+                const pNip = document.getElementById('setting-piket-nip').value || "...........................";
+                const dateStr = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+
+                return new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: borderSet,
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({ borders: borderSet, children: [new Paragraph("Mengetahui,")] }),
+                                new TableCell({ borders: borderSet, children: [new Paragraph({text: `Bandung, ${dateStr}`, alignment: AlignmentType.CENTER})] })
+                            ]
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({ borders: borderSet, children: [new Paragraph("Kepala Sekolah")] }),
+                                new TableCell({ borders: borderSet, children: [new Paragraph({text: "Petugas Piket", alignment: AlignmentType.CENTER})] })
+                            ]
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({ borders: borderSet, children: [new Paragraph({text: "", spacing: {before: 800}})] }),
+                                new TableCell({ borders: borderSet, children: [new Paragraph({text: "", spacing: {before: 800}})] })
+                            ]
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({ borders: borderSet, children: [new Paragraph({children: [new TextRun({text: kNama, bold: true})]})] }),
+                                new TableCell({ borders: borderSet, children: [new Paragraph({children: [new TextRun({text: pNama, bold: true})], alignment: AlignmentType.CENTER})] })
+                            ]
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({ borders: borderSet, children: [new Paragraph(`NIP. ${kNip}`)] }),
+                                new TableCell({ borders: borderSet, children: [new Paragraph({text: `NIP. ${pNip}`, alignment: AlignmentType.CENTER})] })
+                            ]
+                        })
+                    ]
+                });
+            }
+
+            // 1. Ekspor Laporan Individu
+            async exportWordIndividu() {
+                const inputVal = document.getElementById('report-student-input').value;
+                const nis = inputVal.split(' | ')[0].trim(); 
+                if (!nis || !this.studentMap.has(nis)) return alert("Pilih siswa terlebih dahulu!");
+                
+                const s = this.studentMap.get(nis);
+                const data = await this.fetchReportData();
+                if (!data) return;
+
+                // Format Periode Tanggal (Lokal Indonesia)
+                const dStart = new Date(document.getElementById('report-start-date').value);
+                const dEnd = new Date(document.getElementById('report-end-date').value);
+                const formatTgl = (d) => d.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+                const periodeStr = `${formatTgl(dStart)} s/d ${formatTgl(dEnd)}`;
+
+                let hadir = 0, telat = 0, sakit = 0, izin = 0;
+                let telatMenit = 0;
+                const pelanggaranList = [];
+
+                const thresholdParts = this.lateThreshold.split(':');
+                const thresholdMinutes = parseInt(thresholdParts[0]) * 60 + parseInt(thresholdParts[1]);
+
+                data.attendance.filter(a => a.nis === nis).forEach(a => {
+                    hadir++; // Dihitung hadir meskipun telat
+                    if (a.status === 'Terlambat') { 
+                        telat++; 
+                        if(a.timestamp) {
+                            const d = new Date(a.timestamp.seconds * 1000);
+                            let diff = (d.getHours() * 60 + d.getMinutes()) - thresholdMinutes;
+                            if(diff > 0) telatMenit += diff;
+                        }
+                    }
+                    if (a.pelanggaran && a.pelanggaran !== "") pelanggaranList.push({tgl: a.id.split('_')[0], jenis: a.pelanggaran});
+                });
+                
+                data.izin.filter(i => i.nis === nis).forEach(i => {
+                    if (i.tipe === 's') sakit++; else izin++;
+                    if (i.pelanggaran && i.pelanggaran !== "") pelanggaranList.push({tgl: i.id.split('_')[0], jenis: i.pelanggaran});
+                });
+
+                const alpha = Math.max(0, data.totalDays - (hadir + sakit + izin));
+                const getPct = (val) => data.totalDays > 0 ? Math.round((val / data.totalDays) * 100) + "%" : "0%";
+
+                const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+                
+                const tablePresensi = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        new TableRow({ children: ["Hadir", "Terlambat", "Wkt Telat", "Sakit", "Izin", "Alpha", "Hari Efektif"].map(t => new TableCell({children: [new Paragraph({children:[new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER})]})) }),
+                        new TableRow({ children: [hadir.toString(), `${telat}x`, `${telatMenit} mnt`, sakit.toString(), izin.toString(), alpha.toString(), data.totalDays.toString()].map(t => new TableCell({children: [new Paragraph({text: t, alignment: AlignmentType.CENTER})]})) }),
+                        new TableRow({ children: [getPct(hadir), getPct(telat), "-", getPct(sakit), getPct(izin), getPct(alpha), "-"].map(t => new TableCell({children: [new Paragraph({text: t, alignment: AlignmentType.CENTER})]})) })
+                    ]
+                });
+
+                const rowsPelanggaran = [
+                    new TableRow({ children: [
+                        new TableCell({children: [new Paragraph({children:[new TextRun({text:"No", bold:true})], alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph({children:[new TextRun({text:"Tanggal", bold:true})], alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph({children:[new TextRun({text:"Jenis Pelanggaran", bold:true})]})]})
+                    ]})
+                ];
+                pelanggaranList.forEach((p, i) => {
+                    const pDateObj = new Date(p.tgl);
+                    const pTglFormat = pDateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+                    rowsPelanggaran.push(new TableRow({ children: [
+                        new TableCell({children: [new Paragraph({text: (i+1).toString(), alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph({text: pTglFormat, alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph(p.jenis)]})
+                    ]}));
+                });
+                if(pelanggaranList.length === 0) rowsPelanggaran.push(new TableRow({ children: [new TableCell({columnSpan: 3, children: [new Paragraph({text: "Tidak ada catatan pelanggaran.", alignment: AlignmentType.CENTER})]})] }));
+                
+                const tablePelanggaran = new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: rowsPelanggaran });
+
+                const doc = this.createF4Doc([
+                    new Paragraph({ children: [new TextRun({text: "Laporan Presensi dan Pelanggaran Individu Siswa", bold: true, size: 28})], alignment: AlignmentType.CENTER, spacing: {after: 400} }),
+                    new Paragraph(`Nama Siswa\t: ${s.nama}`),
+                    new Paragraph(`NIS\t\t: ${nis}`),
+                    new Paragraph(`Kelas\t\t: ${s.kelas}`),
+                    new Paragraph({text: `Periode\t\t: ${periodeStr}`, spacing: {after: 400}}),
+                    new Paragraph({children: [new TextRun({text: "Presensi", bold: true, size: 24})], spacing: {after: 200}}),
+                    tablePresensi,
+                    new Paragraph({children: [new TextRun({text: "Pelanggaran", bold: true, size: 24})], spacing: {before: 400, after: 200}}),
+                    tablePelanggaran,
+                    new Paragraph({text: "", spacing: {before: 600}}),
+                    this.createSignatureBlock()
+                ]);
+
+                Packer.toBlob(doc).then(blob => saveAs(blob, `Laporan_Individu_${nis}.docx`));
+            }
+
+            // 2. Ekspor Laporan Kelas (Harian)
+            async exportWordKelasHarian() {
+                const kelas = document.getElementById('report-class-select').value;
+                const tanggalRaw = document.getElementById('report-start-date').value;
+                if(!kelas) return alert("Pilih kelas terlebih dahulu!");
+                
+                // Format Tanggal: 20 Juni 2026
+                const dateObj = new Date(tanggalRaw);
+                const tanggalFormat = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+
+                const data = await this.fetchReportData();
+                const students = Array.from(this.studentMap.entries()).filter(([id, s]) => s.kelas === kelas);
+                
+                const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+                
+                // Header Tabel Utama (Semua Rata Tengah)
+                const rows = [new TableRow({ children: ["No", "NIS", "Nama Siswa", "Status", "Keterangan"].map(t => new TableCell({children: [new Paragraph({children:[new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER})]})) })];
+                
+                let h=0, t=0, sk=0, iz=0, a=0;
+                const thresholdParts = this.lateThreshold.split(':');
+                const thresholdMinutes = parseInt(thresholdParts[0]) * 60 + parseInt(thresholdParts[1]);
+
+                students.forEach(([nis, st], index) => {
+                    const att = data.attendance.find(x => x.nis === nis && x.id.startsWith(tanggalRaw));
+                    const izn = data.izin.find(x => x.nis === nis && x.id.startsWith(tanggalRaw));
+                    
+                    let status = "Alpha", ket = "-";
+                    if(att) { 
+                        status = "Hadir"; 
+                        if(att.timestamp) {
+                            const d = new Date(att.timestamp.seconds * 1000);
+                            const hh = String(d.getHours()).padStart(2, '0');
+                            const mm = String(d.getMinutes()).padStart(2, '0');
+                            const timeStr = `${hh}.${mm}`;
+                            
+                            if (att.status === "Terlambat") {
+                                t++;
+                                let diff = (d.getHours() * 60 + d.getMinutes()) - thresholdMinutes;
+                                ket = `Telat : ${diff} menit`;
+                            } else {
+                                h++;
+                                ket = timeStr;
+                            }
+                        } else {
+                            if (att.status === "Terlambat") { t++; ket = "Telat"; } else { h++; ket = "Hadir"; }
+                        }
+                    }
+                    else if(izn) { 
+                        status = izn.tipe === 's' ? "Sakit" : "Izin"; 
+                        ket = izn.keterangan_singkat || izn.pelanggaran || izn.alasan || "-"; 
+                        izn.tipe === 's' ? sk++ : iz++; 
+                    }
+                    else { a++; }
+
+                    // Baris Tabel Utama: Rata Tengah, KECUALI Nama Siswa
+                    rows.push(new TableRow({ children: [
+                        new TableCell({children: [new Paragraph({text: (index+1).toString(), alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph({text: nis, alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph({text: st.nama})]}),
+                        new TableCell({children: [new Paragraph({text: status, alignment: AlignmentType.CENTER})]}),
+                        new TableCell({children: [new Paragraph({text: ket, alignment: AlignmentType.CENTER})]})
+                    ]}));
+                });
+
+                const tableUtama = new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: rows });
+                
+                const totalHadir = h + t; // Total yang hadir (baik tepat waktu maupun terlambat)
+                const totalSiswa = students.length;
+                
+                // Fungsi hitung persentase dengan format koma (misal 88,89%)
+                const getPct = (val) => totalSiswa > 0 ? ((val / totalSiswa) * 100).toFixed(2).replace('.', ',') + "%" : "0%";
+
+                // Tabel Rekapitulasi Kehadiran
+                const tableRekap = new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        new TableRow({ children: ["Hadir", "Terlambat", "Sakit", "Izin", "Alpha", "Jumlah Siswa"].map(txt => new TableCell({children: [new Paragraph({children:[new TextRun({text:txt, bold:true})], alignment: AlignmentType.CENTER})]})) }),
+                        new TableRow({ children: [totalHadir.toString(), t.toString(), sk.toString(), iz.toString(), a.toString(), totalSiswa.toString()].map(txt => new TableCell({children: [new Paragraph({text: txt, alignment: AlignmentType.CENTER})]})) }),
+                        new TableRow({ children: [getPct(totalHadir), getPct(t), getPct(sk), getPct(iz), getPct(a), "-"].map(txt => new TableCell({children: [new Paragraph({text: txt, alignment: AlignmentType.CENTER})]})) })
+                    ]
+                });
+
+                const doc = this.createF4Doc([
+                    new Paragraph({ children: [new TextRun({text: "Laporan Presensi Harian Siswa per Kelas", bold: true, size: 28})], alignment: AlignmentType.CENTER, spacing: {after: 400} }),
+                    new Paragraph(`Kelas\t: ${kelas}`),
+                    new Paragraph({text: `Tanggal\t: ${tanggalFormat}`, spacing: {after: 400}}),
+                    tableUtama,
+                    new Paragraph({children: [new TextRun({text: "Rekapitulasi Kehadiran", bold: true, size: 24})], spacing: {before: 400, after: 200}}),
+                    tableRekap,
+                    new Paragraph({text: "", spacing: {before: 600}}),
+                    this.createSignatureBlock()
+                ]);
+
+                Packer.toBlob(doc).then(blob => saveAs(blob, `Laporan_Harian_${kelas}_${tanggalRaw}.docx`));
+            }
+
+            // 3. Ekspor Laporan Kelas (Periode)
+            async exportWordKelasPeriode() {
+                const kelas = document.getElementById('report-class-select').value;
+                if(!kelas) return alert("Pilih kelas terlebih dahulu!");
+                
+                // Format Periode Tanggal (Lokal Indonesia)
+                const dStart = new Date(document.getElementById('report-start-date').value);
+                const dEnd = new Date(document.getElementById('report-end-date').value);
+                const formatTgl = (d) => d.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+                const periodeStr = `${formatTgl(dStart)} s/d ${formatTgl(dEnd)}`;
+
+                const data = await this.fetchReportData();
+                const students = Array.from(this.studentMap.entries()).filter(([id, s]) => s.kelas === kelas);
+                
+                const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+                
+                // Kolom S, I, A dikecilkan menjadi 4%. Kolom Nama Siswa dibesarkan menjadi 36%.
+                const colWidths = [4, 13, 36, 8, 7, 10, 4, 4, 4, 10];
+                const headerTitles = ["No", "NIS", "Nama Siswa", "Hadir", "Telat", "Telat (mnt)", "S", "I", "A", "Hari Efektif"];
+
+                const rows = [
+                    new TableRow({ 
+                        children: headerTitles.map((t, i) => new TableCell({
+                            width: { size: colWidths[i], type: WidthType.PERCENTAGE },
+                            children: [new Paragraph({children:[new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER})]
+                        })) 
+                    })
+                ];
+                
+                const thresholdParts = this.lateThreshold.split(':');
+                const thresholdMinutes = parseInt(thresholdParts[0]) * 60 + parseInt(thresholdParts[1]);
+
+                students.forEach(([nis, st], index) => {
+                    let h=0, t=0, sk=0, iz=0;
+                    let telatMenit = 0;
+                    
+                    data.attendance.filter(x => x.nis === nis).forEach(x => { 
+                        h++; // Hitung sebagai Hadir untuk semua yang absen
+                        if(x.status === "Terlambat") {
+                            t++; // Catat jumlah telatnya
+                            if(x.timestamp) {
+                                const d = new Date(x.timestamp.seconds * 1000);
+                                let diff = (d.getHours() * 60 + d.getMinutes()) - thresholdMinutes;
+                                if(diff > 0) telatMenit += diff;
+                            }
+                        }
+                    });
+                    
+                    data.izin.filter(x => x.nis === nis).forEach(x => { if(x.tipe === "s") sk++; else iz++; });
+                    
+                    // Hitung Alpha dari sisa hari
+                    const alpha = Math.max(0, data.totalDays - (h + sk + iz));
+                    
+                    const rowData = [
+                        (index+1).toString(), nis, st.nama, h.toString(), t.toString(), telatMenit.toString(), sk.toString(), iz.toString(), alpha.toString(), data.totalDays.toString()
+                    ];
+
+                    rows.push(new TableRow({ 
+                        children: rowData.map((txt, i) => new TableCell({
+                            width: { size: colWidths[i], type: WidthType.PERCENTAGE },
+                            children: [new Paragraph({text: txt, alignment: (i === 2) ? AlignmentType.LEFT : AlignmentType.CENTER})]
+                        })) 
+                    }));
+                });
+
+                const doc = this.createF4Doc([
+                    new Paragraph({ children: [new TextRun({text: "Laporan Presensi Siswa per Kelas (Periode)", bold: true, size: 28})], alignment: AlignmentType.CENTER, spacing: {after: 400} }),
+                    new Paragraph(`Kelas\t\t: ${kelas}`),
+                    new Paragraph({text: `Periode Tanggal\t: ${periodeStr}`, spacing: {after: 400}}),
+                    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: rows }),
+                    new Paragraph({text: "", spacing: {before: 600}}),
+                    this.createSignatureBlock()
+                ]);
+
+                Packer.toBlob(doc).then(blob => saveAs(blob, `Laporan_Periode_${kelas}.docx`));
+            }
+
+            // 4. Ekspor Rekap Harian Semua Sekolah
+            async exportWordRekapSekolah() {
+                const tanggalRaw = document.getElementById('report-start-date').value;
+                if(!tanggalRaw) return alert("Pilih tanggal mulai terlebih dahulu!");
+                
+                const dateObj = new Date(tanggalRaw);
+                const tanggalFormat = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+
+                const data = await this.fetchReportData();
+                
+                const gradeStats = {
+                    "Kelas X": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
+                    "Kelas XI": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
+                    "Kelas XII": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 }
+                };
+
+                Array.from(this.studentMap.values()).forEach(s => {
+                    let grade = "Lainnya";
+                    if (s.kelas.startsWith("XII")) grade = "Kelas XII";
+                    else if (s.kelas.startsWith("XI")) grade = "Kelas XI";
+                    else if (s.kelas.startsWith("X")) grade = "Kelas X";
+                    
+                    if (!gradeStats[grade]) gradeStats[grade] = { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 };
+                    gradeStats[grade].jml++;
+                });
+
+                data.attendance.filter(a => a.id.startsWith(tanggalRaw)).forEach(a => {
+                    let grade = "Lainnya";
+                    if (a.kelas.startsWith("XII")) grade = "Kelas XII";
+                    else if (a.kelas.startsWith("XI")) grade = "Kelas XI";
+                    else if (a.kelas.startsWith("X")) grade = "Kelas X";
+                    
+                    if (gradeStats[grade]) {
+                        gradeStats[grade].hadir++; 
+                        if (a.status === 'Terlambat') gradeStats[grade].telat++; 
+                    }
+                });
+
+                data.izin.filter(i => i.id.startsWith(tanggalRaw)).forEach(i => {
+                    let grade = "Lainnya";
+                    if (i.kelas.startsWith("XII")) grade = "Kelas XII";
+                    else if (i.kelas.startsWith("XI")) grade = "Kelas XI";
+                    else if (i.kelas.startsWith("X")) grade = "Kelas X";
+                    
+                    if (gradeStats[grade]) {
+                        if (i.tipe === 's') gradeStats[grade].sakit++; 
+                        else gradeStats[grade].izin++; 
+                    }
+                });
+
+                const namaSekolah = document.getElementById('setting-sekolah-nama').value || "SMA Negeri 1 Bandung";
+
+                // PENTING: Tambahkan VerticalAlign dan HeightRule
+                const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, VerticalAlign, HeightRule } = docx;
+                
+                // Mengatur tinggi baris agar lebih lega dan proporsional (500 twips)
+                const rowH = { value: 500, rule: HeightRule.AT_LEAST };
+
+                // Header Tabel dengan 2 Kata (Atas Bawah) untuk Jumlah Siswa dan Total Hadir
+                const headerRow = new TableRow({
+                    height: rowH,
+                    children: [
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "KELAS", alignment: AlignmentType.CENTER, bold: true})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Jumlah", alignment: AlignmentType.CENTER, bold: true}), new Paragraph({text: "Siswa", alignment: AlignmentType.CENTER, bold: true})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Total", alignment: AlignmentType.CENTER, bold: true}), new Paragraph({text: "Hadir", alignment: AlignmentType.CENTER, bold: true})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Terlambat", alignment: AlignmentType.CENTER, bold: true})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Sakit", alignment: AlignmentType.CENTER, bold: true})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Izin", alignment: AlignmentType.CENTER, bold: true})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Alpha", alignment: AlignmentType.CENTER, bold: true})] })
+                    ]
+                });
+                
+                const rows = [headerRow];
+                let totSiswa=0, totHadir=0, totTelat=0, totSakit=0, totIzin=0, totAlpha=0;
+
+                // Fungsi pembuat persentase TANPA kurung
+                const getPct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(2).replace('.', ',') + "%" : "0%";
+
+                const gradeKeys = ["Kelas X", "Kelas XI", "Kelas XII"].filter(k => gradeStats[k] && gradeStats[k].jml > 0);
+
+                gradeKeys.forEach(k => {
+                    const c = gradeStats[k];
+                    const alpha = Math.max(0, c.jml - (c.hadir + c.sakit + c.izin)); 
+                    
+                    totSiswa += c.jml; totHadir += c.hadir; totTelat += c.telat; 
+                    totSakit += c.sakit; totIzin += c.izin; totAlpha += alpha;
+                    
+                    // Baris 1: Angka (Kelas dan Jumlah Siswa di-Rowspan=2)
+                    rows.push(new TableRow({ 
+                        height: rowH,
+                        children: [
+                            new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: k, alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.jml.toString(), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.hadir.toString(), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.telat.toString(), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.sakit.toString(), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.izin.toString(), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: alpha.toString(), alignment: AlignmentType.CENTER})] })
+                        ]
+                    }));
+                    
+                    // Baris 2: Persentase
+                    rows.push(new TableRow({ 
+                        height: rowH,
+                        children: [
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.hadir, c.jml), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.telat, c.jml), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.sakit, c.jml), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.izin, c.jml), alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(alpha, c.jml), alignment: AlignmentType.CENTER})] })
+                        ]
+                    }));
+                });
+
+                // Baris TOTAL Bawah (Angka)
+                rows.push(new TableRow({ 
+                    height: rowH,
+                    children: [
+                        new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:"TOTAL", bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totSiswa.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totHadir.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totTelat.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totSakit.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totIzin.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totAlpha.toString(), bold:true})], alignment: AlignmentType.CENTER})] })
+                    ]
+                }));
+                
+                // Baris TOTAL Bawah (Persentase)
+                rows.push(new TableRow({ 
+                    height: rowH,
+                    children: [
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totHadir, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totTelat, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totSakit, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totIzin, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totAlpha, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] })
+                    ]
+                }));
+
+                const doc = this.createF4Doc([
+                    new Paragraph({ children: [new TextRun({text: "Laporan Rekapitulasi Presensi per Hari", bold: true, size: 28})], alignment: AlignmentType.CENTER, spacing: {after: 200} }),
+                    new Paragraph({ children: [new TextRun({text: namaSekolah, bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 200} }),
+                    new Paragraph({ children: [new TextRun({text: `Tanggal ${tanggalFormat}`, bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 400}}),
+                    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: rows }),
+                    new Paragraph({text: "", spacing: {before: 600}}),
+                    this.createSignatureBlock()
+                ]);
+
+                Packer.toBlob(doc).then(blob => saveAs(blob, `Rekap_Sekolah_${tanggalRaw}.docx`));
+            }
+            // ============================================================================
+            // AKHIR TAMBAHAN TAHAP 3
+            // ============================================================================
         }
         window.picketApp = new PicketApp();
     </script>
