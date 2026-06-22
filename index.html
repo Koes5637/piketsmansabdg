@@ -1629,6 +1629,7 @@
 
                 const studentsInClass = Array.from(this.studentMap.entries())
                     .filter(([id, s]) => s.kelas === kelas)
+                    .sort((a, b) => (a[1].nama || "").localeCompare(b[1].nama || ""))
                     .map(([id, s]) => ({ id, ...s }));
 
                 let stats = { totalSiswa: studentsInClass.length, hadir: 0, telat: 0, sakit: 0, izin: 0, alpha: 0 };
@@ -2223,7 +2224,9 @@
                 const tanggalFormat = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
 
                 const data = await this.fetchReportData();
-                const students = Array.from(this.studentMap.entries()).filter(([id, s]) => s.kelas === kelas);
+                const students = Array.from(this.studentMap.entries())
+                    .filter(([id, s]) => s.kelas === kelas)
+                    .sort((a, b) => (a[1].nama || "").localeCompare(b[1].nama || ""));
                 
                 const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
                 
@@ -2320,7 +2323,9 @@
                 const periodeStr = `${formatTgl(dStart)} s/d ${formatTgl(dEnd)}`;
 
                 const data = await this.fetchReportData();
-                const students = Array.from(this.studentMap.entries()).filter(([id, s]) => s.kelas === kelas);
+                const students = Array.from(this.studentMap.entries())
+                    .filter(([id, s]) => s.kelas === kelas)
+                    .sort((a, b) => (a[1].nama || "").localeCompare(b[1].nama || ""));
                 
                 const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
                 
