@@ -178,6 +178,7 @@
                 <button onclick="picketApp.switchMainTab('statistics')" id="tab-statistics" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition">Statistik</button>
                 <button onclick="picketApp.switchMainTab('class-report')" id="tab-class-report" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition">Laporan</button>
                 <button onclick="picketApp.switchMainTab('data-student')" id="tab-data-student" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition">Data Siswa</button>
+				<button onclick="picketApp.switchMainTab('guru')" id="tab-guru" class="tab-btn flex-1 min-w-[100px] py-4 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-white transition">Guru & Piket</button>
             </div>
 
             <div id="content-live" class="flex-1 flex flex-col overflow-hidden relative">
@@ -366,7 +367,43 @@
                     <div class="text-center text-slate-600 mt-20 italic">Memuat data...</div>
                 </div>
             </div>
+			<div id="content-guru" class="flex-1 hidden flex-col overflow-hidden p-6 space-y-6 custom-scrollbar overflow-y-auto">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center bg-slate-900/30 p-6 rounded-3xl border border-slate-700 gap-4">
+					<div>
+						<h3 class="font-bold text-indigo-400 text-lg flex items-center gap-2"><i class="ph ph-chalkboard-teacher"></i> Monitor Guru & Piket</h3>
+						<p class="text-xs text-slate-400 mt-1">Pemantauan kehadiran petugas piket dan daftar tugas harian.</p>
+					</div>
+					<div class="flex flex-wrap gap-3 items-end w-full lg:w-auto justify-end">
+						<div>
+							<label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mulai Tanggal</label>
+							<input type="date" id="guru-report-start" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white outline-none">
+						</div>
+						<div>
+							<label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Sampai Tanggal</label>
+							<input type="date" id="guru-report-end" class="bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-white outline-none">
+						</div>
+						<button onclick="picketApp.exportLaporanGuruF4Periode()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-bold transition flex items-center gap-2 shadow-lg h-10 text-sm">
+							<i class="ph ph-printer text-lg"></i> Cetak Laporan F4
+						</button>
+					</div>
+				</div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+                    <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-700 shadow-lg">
+                        <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2"><i class="ph ph-shield-check text-emerald-400"></i> Petugas Piket Hari Ini</h4>
+                        <div id="piket-list" class="space-y-3">
+                            <div class="text-center text-slate-500 text-xs italic">Memuat data piket...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-900/50 p-6 rounded-3xl border border-slate-700 shadow-lg">
+                        <h4 class="text-sm font-bold text-white mb-4 uppercase tracking-wider border-b border-slate-700 pb-2 flex items-center gap-2"><i class="ph ph-warning-circle text-orange-400"></i> Guru Berhalangan / Izin</h4>
+                        <div id="guru-absen-list" class="space-y-3">
+                            <div class="text-center text-slate-500 text-xs italic">Memuat data guru...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -557,6 +594,8 @@
             const endDateEl = document.getElementById('report-end-date');
             if(startDateEl) startDateEl.value = today;
             if(endDateEl) endDateEl.value = today;
+			if(document.getElementById('guru-report-start')) document.getElementById('guru-report-start').value = today;
+            if(document.getElementById('guru-report-end')) document.getElementById('guru-report-end').value = today;
         });
 
         const chartBgPlugin = {
@@ -576,6 +615,8 @@
                 this.lateThreshold = "07:00";
                 this.studentMap = new Map();
                 this.classes = new Set();
+				this.teacherMap = new Map();
+                this.todayPiketNips = [];
                 this.user = null;
                 this.unsubscribes = [];
                 
@@ -612,6 +653,8 @@
             async initSystem() {
                 if (!this.user) return;
                 await this.fetchSettings();
+                await this.fetchTeachers(); // MENARIK DATA GURU
+                await this.fetchPiketSchedule(); // MENARIK JADWAL PIKET
                 await this.fetchStudents();
                 this.setupSessionListener();
             }
@@ -869,8 +912,14 @@
                         const combined = [...attendanceData, ...izinData]
                             .sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                         
-                        this.renderLiveList(combined);
-                        this.statsDataCache = { attendance: combined, totalStudents: this.studentMap.size };
+                        // PEMISAHAN DATA BERDASARKAN NIP GURU
+                        const studentData = combined.filter(item => !this.teacherMap.has(item.nis));
+                        const teacherData = combined.filter(item => this.teacherMap.has(item.nis));
+
+                        this.renderLiveList(studentData); // Render ke Monitor Siswa
+                        this.renderGuruList(teacherData); // Render ke Monitor Guru & Piket
+
+                        this.statsDataCache = { attendance: studentData, totalStudents: this.studentMap.size };
                         if(!document.getElementById('content-statistics').classList.contains('hidden')){
                             this.renderPieChart();
                         }
@@ -1866,7 +1915,7 @@
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('border-transparent', 'text-slate-500'));
                 
                 // Sembunyikan semua tab & hilangkan sifat mekarnya (flex)
-                ['live', 'statistics', 'class-report', 'data-student'].forEach(view => {
+                ['live', 'statistics', 'class-report', 'data-student', 'guru'].forEach(view => {
                     const el = document.getElementById('content-' + view);
                     if(el) {
                         el.classList.add('hidden');
@@ -2071,17 +2120,19 @@
                 });
             }
 
-            // Fungsi Pembantu: Membuat Bagian Tanda Tangan
-            createSignatureBlock() {
+            // Fungsi Pembantu: Membuat Bagian Tanda Tangan Dinamis
+            createSignatureBlock(customDate = null) {
                 const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, AlignmentType, BorderStyle } = docx;
                 const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
                 const borderSet = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-                
+
                 const kNama = document.getElementById('setting-kepsek-nama').value || "...........................";
                 const kNip = document.getElementById('setting-kepsek-nip').value || "...........................";
                 const pNama = document.getElementById('setting-piket-nama').value || "...........................";
                 const pNip = document.getElementById('setting-piket-nip').value || "...........................";
-                const dateStr = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+
+                const targetDate = customDate ? customDate : new Date();
+                const dateStr = targetDate.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
 
                 return new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -2544,6 +2595,261 @@
             // ============================================================================
             // AKHIR TAMBAHAN TAHAP 3
             // ============================================================================
+			// =========================================================
+            // TAMBAHAN TAHAP 4: SISTEM MONITOR GURU & CETAK F4
+            // =========================================================
+            async fetchTeachers() {
+                try {
+                    const snap = await getDocs(collection(db, 'users_guru'));
+                    this.teacherMap.clear();
+                    snap.forEach(d => {
+                        const data = d.data();
+                        const nip = data.nip || d.id; 
+                        this.teacherMap.set(nip, data);
+                    });
+                } catch(e) { console.error("Fetch Teachers Error:", e); }
+            }
+
+            async fetchPiketSchedule() {
+                const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const hariIni = namaHari[new Date().getDay()];
+                try {
+                    const snap = await getDoc(doc(db, 'sekolah_settings', 'jadwal_piket'));
+                    if(snap.exists()) {
+                        const jadwal = snap.data();
+                        this.todayPiketNips = jadwal[hariIni] || [];
+                    }
+                } catch(e) { console.error("Fetch Piket Error:", e); }
+            }
+
+            renderGuruList(teacherData) {
+                const piketContainer = document.getElementById('piket-list');
+                const absenContainer = document.getElementById('guru-absen-list');
+                
+                let piketHtml = '';
+                let absenHtml = '';
+
+                // 1. Render Petugas Piket
+                if (this.todayPiketNips.length === 0) {
+                    piketHtml = '<div class="text-xs text-slate-500 italic text-center py-4">Tidak ada jadwal piket hari ini.</div>';
+                } else {
+                    piketHtml = this.todayPiketNips.map(nip => {
+                        const guru = this.teacherMap.get(nip) || {fullName: 'Unknown'};
+                        const att = teacherData.find(t => t.nis === nip && !t.isIzin);
+                        const isHadir = !!att;
+                        const timeStr = isHadir && att.timestamp ? new Date(att.timestamp.seconds * 1000).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : '--:--';
+                        
+                        return `
+                            <div class="p-4 bg-slate-800 rounded-xl border ${isHadir ? 'border-emerald-500/50' : 'border-slate-600'} flex justify-between items-center transition-all hover:bg-slate-700">
+                                <div>
+                                    <p class="font-bold text-sm text-white">${guru.fullName || guru.nama}</p>
+                                    <p class="text-[10px] text-slate-400 font-mono">NIP. ${nip}</p>
+                                </div>
+                                <div>
+                                    ${isHadir ? `<span class="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-lg border border-emerald-500/30">Hadir: ${timeStr}</span>` : `<span class="px-3 py-1.5 bg-slate-700 text-slate-400 text-[10px] font-bold rounded-lg">Belum Hadir</span>`}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // 2. Render Guru Berhalangan
+                const absenData = teacherData.filter(t => t.isIzin);
+                if (absenData.length === 0) {
+                    absenHtml = '<div class="text-xs text-slate-500 italic text-center py-4">Nihil. Semua guru hadir.</div>';
+                } else {
+                    absenHtml = absenData.map(item => {
+                        const guru = this.teacherMap.get(item.nis) || {fullName: item.nama};
+                        const kategori = item.kategori_izin || (item.tipe === 's' ? 'Sakit' : 'Izin');
+                        let tugasHtml = '';
+                        
+                        if (item.tugas_kelas && item.tugas_kelas.length > 0) {
+                            tugasHtml = '<div class="mt-3 pt-3 border-t border-slate-700/50 space-y-1.5">';
+                            item.tugas_kelas.forEach(t => {
+                                tugasHtml += `<p class="text-[11px] text-slate-300"><span class="text-indigo-400 font-bold">[Kls ${t.kelas} / Jam ${t.jam}]</span> ${t.instruksi}</p>`;
+                            });
+                            tugasHtml += '</div>';
+                        } else {
+                            tugasHtml = '<p class="text-[10px] text-slate-500 mt-3 italic pt-3 border-t border-slate-700/50">Tidak melampirkan tugas kelas.</p>';
+                        }
+
+                        return `
+                            <div class="p-4 bg-slate-800 rounded-xl border border-orange-500/30 transition-all hover:bg-slate-700">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-bold text-sm text-white">${guru.fullName || guru.nama}</p>
+                                        <p class="text-[10px] text-orange-400 font-bold uppercase mt-0.5">${kategori}</p>
+                                    </div>
+                                    ${item.foto ? `<button onclick="picketApp.viewProof('${item.foto}', '${item.alasan}')" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition" title="Lihat Bukti Surat"><i class="ph ph-file-text"></i></button>` : ''}
+                                </div>
+                                <p class="text-xs text-slate-400 mt-2 italic">"${item.alasan}"</p>
+                                ${tugasHtml}
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                piketContainer.innerHTML = piketHtml;
+                absenContainer.innerHTML = absenHtml;
+            }
+
+            async exportLaporanGuruF4Periode() {
+                const startInput = document.getElementById('guru-report-start');
+                const endInput = document.getElementById('guru-report-end');
+                
+                // Gunakan tanggal hari ini jika kotak input belum siap
+                const todayStr = (new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
+                const startVal = startInput ? startInput.value : todayStr;
+                const endVal = endInput ? endInput.value : todayStr;
+
+                if (!startVal || !endVal) return alert("Pilih tanggal mulai dan sampai terlebih dahulu!");
+
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "<i class='ph ph-spinner animate-spin'></i> Memproses Laporan..."; 
+                btn.disabled = true;
+
+                try {
+                    const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+                    const namaSekolah = document.getElementById('setting-sekolah-nama').value || "Sekolah";
+
+                    const snapPiket = await getDoc(doc(db, 'sekolah_settings', 'jadwal_piket'));
+                    const jadwalPiketAll = snapPiket.exists() ? snapPiket.data() : {};
+
+                    const attSnap = await getDocs(collection(db, PATH_ATTENDANCE));
+                    const izinSnap = await getDocs(collection(db, PATH_IZIN));
+                    
+                    const attendanceAll = attSnap.docs.map(d=>({id: d.id, ...d.data()}));
+                    const izinAll = izinSnap.docs.map(d=>({id: d.id, ...d.data()}));
+
+                    const childrenElements = [];
+                    
+                    // Format waktu dipastikan aman agar loop bekerja
+                    let currDate = new Date(startVal + 'T00:00:00');
+                    const endDate = new Date(endVal + 'T23:59:59'); 
+                    const namaHariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+                    let isFirstPage = true;
+
+                    while(currDate <= endDate) {
+                        const y = currDate.getFullYear();
+                        const m = String(currDate.getMonth() + 1).padStart(2, '0');
+                        const d = String(currDate.getDate()).padStart(2, '0');
+                        const dateStr = `${y}-${m}-${d}`;
+                        const hariStr = namaHariArr[currDate.getDay()];
+                        
+                        // Format Tanggal Indonesia (Contoh: 28 Juni 2026)
+                        const tglIndo = currDate.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+
+                        // Otomatis Lewati Sabtu dan Minggu
+                        if (currDate.getDay() === 0 || currDate.getDay() === 6) { 
+                            currDate.setDate(currDate.getDate() + 1); 
+                            continue; 
+                        }
+
+                        const piketNips = jadwalPiketAll[hariStr] || [];
+                        const attToday = attendanceAll.filter(a => a.id.startsWith(dateStr) && this.teacherMap.has(a.nis));
+                        const izinToday = izinAll.filter(a => a.id.startsWith(dateStr) && this.teacherMap.has(a.nis));
+
+                        const titleProps = { alignment: AlignmentType.CENTER, spacing: {after: 200} };
+                        if (!isFirstPage) titleProps.pageBreakBefore = true; // Dorong ke halaman baru
+                        isFirstPage = false;
+
+                        // KOP LAPORAN
+                        childrenElements.push(new Paragraph({ children: [new TextRun({text: "LAPORAN HARIAN PIKET GURU", bold: true, size: 28})], ...titleProps }));
+                        childrenElements.push(new Paragraph({ children: [new TextRun({text: namaSekolah.toUpperCase(), bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 400} }));
+                        childrenElements.push(new Paragraph({text: `Hari, Tanggal\t: ${hariStr}, ${tglIndo}`, spacing: {after: 400}}));
+
+                        // TABEL A: PIKET
+                        childrenElements.push(new Paragraph({children: [new TextRun({text: "A. DAFTAR HADIR PETUGAS PIKET", bold: true})], spacing: {after: 200}}));
+                        const piketRows = [
+                            new TableRow({ children: ["No", "NIP", "Nama Petugas Piket", "Kehadiran", "Jam Hadir"].map(txt => new TableCell({children: [new Paragraph({children:[new TextRun({text:txt, bold:true})], alignment: AlignmentType.CENTER})]})) })
+                        ];
+
+                        if (piketNips.length === 0) {
+                            piketRows.push(new TableRow({ children: [new TableCell({columnSpan: 5, children: [new Paragraph({text: "Tidak ada jadwal piket hari ini.", alignment: AlignmentType.CENTER})]})] }));
+                        } else {
+                            piketNips.forEach((nip, idx) => {
+                                const guru = this.teacherMap.get(nip) || {fullName: '-'};
+                                const att = attToday.find(t => t.nis === nip);
+                                const status = att ? "Hadir" : "Belum Hadir";
+                                const jam = att && att.timestamp ? new Date(att.timestamp.seconds * 1000).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : "-";
+
+                                piketRows.push(new TableRow({ children: [
+                                    new TableCell({children: [new Paragraph({text: (idx+1).toString(), alignment: AlignmentType.CENTER})]}),
+                                    new TableCell({children: [new Paragraph({text: nip, alignment: AlignmentType.CENTER})]}),
+                                    new TableCell({children: [new Paragraph(guru.fullName || guru.nama)]}),
+                                    new TableCell({children: [new Paragraph({text: status, alignment: AlignmentType.CENTER})]}),
+                                    new TableCell({children: [new Paragraph({text: jam, alignment: AlignmentType.CENTER})]})
+                                ]}));
+                            });
+                        }
+                        childrenElements.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: piketRows }));
+
+                        // TABEL B: GURU BERHALANGAN
+                        childrenElements.push(new Paragraph({children: [new TextRun({text: "B. DAFTAR GURU BERHALANGAN & TUGAS INVAL", bold: true})], spacing: {before: 400, after: 200}}));
+                        const absenRows = [
+                            new TableRow({ children: ["No", "Nama Guru", "Keterangan", "Kelas", "Jam Ke", "Tugas/Instruksi"].map(txt => new TableCell({children: [new Paragraph({children:[new TextRun({text:txt, bold:true})], alignment: AlignmentType.CENTER})]})) })
+                        ];
+
+                        if (izinToday.length === 0) {
+                            absenRows.push(new TableRow({ children: [new TableCell({columnSpan: 6, children: [new Paragraph({text: "Nihil (Semua Guru Hadir).", alignment: AlignmentType.CENTER})]})] }));
+                        } else {
+                            let no = 1;
+                            izinToday.forEach(item => {
+                                const guru = this.teacherMap.get(item.nis) || {fullName: item.nama};
+                                const kategori = item.kategori_izin || "Izin";
+                                
+                                if (item.tugas_kelas && item.tugas_kelas.length > 0) {
+                                    item.tugas_kelas.forEach((tgs, idx) => {
+                                        absenRows.push(new TableRow({ children: [
+                                            new TableCell({children: [new Paragraph({text: idx === 0 ? no.toString() : "", alignment: AlignmentType.CENTER})]}),
+                                            new TableCell({children: [new Paragraph(idx === 0 ? (guru.fullName || guru.nama) : "")]}),
+                                            new TableCell({children: [new Paragraph(idx === 0 ? kategori : "")]}),
+                                            new TableCell({children: [new Paragraph({text: tgs.kelas, alignment: AlignmentType.CENTER})]}),
+                                            new TableCell({children: [new Paragraph({text: tgs.jam, alignment: AlignmentType.CENTER})]}),
+                                            new TableCell({children: [new Paragraph(tgs.instruksi)]})
+                                        ]}));
+                                    });
+                                } else {
+                                    absenRows.push(new TableRow({ children: [
+                                        new TableCell({children: [new Paragraph({text: no.toString(), alignment: AlignmentType.CENTER})]}),
+                                        new TableCell({children: [new Paragraph(guru.fullName || guru.nama)]}),
+                                        new TableCell({children: [new Paragraph(kategori)]}),
+                                        new TableCell({children: [new Paragraph({text: "-", alignment: AlignmentType.CENTER})]}),
+                                        new TableCell({children: [new Paragraph({text: "-", alignment: AlignmentType.CENTER})]}),
+                                        new TableCell({children: [new Paragraph("-")]})
+                                    ]}));
+                                }
+                                no++;
+                            });
+                        }
+                        childrenElements.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: absenRows }));
+                        
+                        // TANDA TANGAN (Otomatis Tanggal Halaman Ini)
+                        childrenElements.push(new Paragraph({text: "", spacing: {before: 600}}));
+                        childrenElements.push(this.createSignatureBlock(currDate));
+
+                        currDate.setDate(currDate.getDate() + 1); 
+                    }
+
+                    if (childrenElements.length === 0) {
+                        alert("Tidak ada hari kerja di rentang tanggal yang dipilih.");
+                        return;
+                    }
+
+                    // Tancap Gas Ekspor ke Word (Ganti doc jadi dokumenWord)
+                    const dokumenWord = this.createF4Doc(childrenElements);
+                    Packer.toBlob(dokumenWord).then(blob => saveAs(blob, `Laporan_Piket_Periode_${startVal}_sd_${endVal}.docx`));
+
+                } catch (e) {
+                    console.error(e);
+                    alert("Terjadi kesalahan: " + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
         }
         window.picketApp = new PicketApp();
     </script>
