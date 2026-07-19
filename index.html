@@ -106,13 +106,18 @@
 
     <div id="view-login" class="view-section active flex-col items-center justify-center min-h-screen p-4 bg-indigo-900">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-slate-800 text-center">
-            <img id="logo-login" src="" alt="Logo Sekolah" class="w-24 h-auto mx-auto mb-4 drop-shadow-md">
+            <!-- Ikon Piket Global yang Netral -->
+            <div class="w-24 h-24 mx-auto mb-4 bg-indigo-50 border-4 border-indigo-100 rounded-full flex items-center justify-center shadow-inner">
+                <i class="ph ph-shield-check text-6xl text-indigo-600"></i>
+            </div>
             <h2 class="text-2xl font-bold text-indigo-900 mb-2">Admin Piket</h2>
             <p class="text-xs text-slate-400 mb-6">Database Pusat: Manajemen Siswa</p>
             <form onsubmit="picketApp.login(event)">
-                <input type="password" id="admin-pin" placeholder="PIN Admin Piket"
-                    class="w-full p-4 border-2 border-slate-100 rounded-2xl mb-4 text-center text-lg outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all">
-                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
+                <input type="text" id="school-code" placeholder="KODE SEKOLAH" required
+                    class="w-full p-4 border-2 border-slate-100 rounded-2xl mb-3 text-center text-lg uppercase font-bold tracking-widest outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all">
+                <input type="password" id="admin-pin" placeholder="PASSWORD PIKET" required
+                    class="w-full p-4 border-2 border-slate-100 rounded-2xl mb-4 text-center text-lg tracking-[0.3em] font-bold outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all">
+                <button type="submit" id="btn-login" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">
                     Masuk Dashboard
                 </button>
             </form>
@@ -543,6 +548,14 @@
                         <input type="text" id="setting-piket-nip" placeholder="NIP Petugas" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
                     </div>
                 </div>
+                
+                <!-- TAMBAHAN: UBAH PASSWORD PIKET -->
+                <div class="mb-4 pt-4 border-t border-slate-100">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ubah Password Piket (Login Aplikasi Ini)</label>
+                    <input type="text" id="setting-piket-password" placeholder="Default: piket123" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono tracking-widest outline-none focus:border-indigo-500">
+                    <p class="text-[10px] text-slate-400 mt-1">*Jika diubah, beritahukan ke Admin Sekolah.</p>
+                </div>
+
                 <button onclick="picketApp.saveSettings()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100">Simpan Konfigurasi</button>
                 
                 <div class="pt-4 border-t border-slate-100 mt-4">
@@ -561,8 +574,8 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, serverTimestamp, query, orderBy } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // CONFIG MENGGUNAKAN 'APLIKASI-ULANGAN-01' (PUSAT)
-        const firebaseConfig = {
+        // CONFIG BUKU INDUK SUPER ADMIN PUSAT
+        const masterConfig = {
             apiKey: "AIzaSyAwIwimlyrE4qQqYa2gA8Pfygd59USsveQ",
             authDomain: "aplikasi-ulangan-01.firebaseapp.com",
             projectId: "aplikasi-ulangan-01",
@@ -571,9 +584,14 @@
             appId: "1:409085062439:web:280589d1a3e12e7b980d02",
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        const masterApp = initializeApp(masterConfig, "MasterApp");
+        const masterAuth = getAuth(masterApp);
+        const masterDb = getFirestore(masterApp);
+
+        // POINTER DINAMIS UNTUK DATABASE SEKOLAH (Dibiarkan kosong dulu)
+        let app = null;
+        let auth = null;
+        let db = null;
 
         const APP_ID = 'presensi-sekolah-terintegrasi'; 
         const PATH_CONFIG = `artifacts/${APP_ID}/public/data/config`;
@@ -637,18 +655,9 @@
                 this.statsDataCache = null;
                 this.currentStats = null;
 
-                this.initAuth();
+                // this.initAuth() dihapus karena login sekarang manual dengan Kode Sekolah
             }
-
-            async initAuth() {
-                try {
-                    await signInAnonymously(auth);
-                    onAuthStateChanged(auth, (user) => {
-                        this.user = user;
-                        if (user) this.initSystem();
-                    });
-                } catch (error) { console.error("Auth Failed:", error); }
-            }
+            // Fungsi initAuth() lama telah dibuang.
 
             async initSystem() {
                 if (!this.user) return;
@@ -659,15 +668,66 @@
                 this.setupSessionListener();
             }
 
-            login(e) {
+            async login(e) {
                 e.preventDefault();
-                if(document.getElementById('admin-pin').value === '762672') {
+                const kode = document.getElementById('school-code').value.toUpperCase().trim();
+                const pin = document.getElementById('admin-pin').value.trim();
+                const btn = document.getElementById('btn-login');
+                const originalText = btn.innerHTML;
+
+                btn.innerHTML = "<i class='ph ph-spinner animate-spin'></i> Memverifikasi...";
+                btn.disabled = true;
+
+                try {
+                    // 1. Cek ke Buku Induk Super Admin (Ambil Kunci Loker Sekolah)
+                    await signInAnonymously(masterAuth);
+                    const schoolSnap = await getDoc(doc(masterDb, 'daftar_sekolah', kode));
+                    
+                    if (!schoolSnap.exists()) throw new Error("Kode Sekolah tidak ditemukan!");
+                    const schoolData = schoolSnap.data();
+                    if (schoolData.status !== "Aktif") throw new Error("Lisensi sekolah sedang ditangguhkan!");
+
+                    // 2. Ganti Logo Secara Dinamis (HANYA untuk Sidebar & Layar Proyektor)
+                    const logoUrl = schoolData.logo_url || "Logo.png";
+                    ['logo-sidebar', 'logo-projector'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if(el) el.src = logoUrl;
+                    });
+
+                    // 3. Masuk ke Database Sekolah Tersebut
+                    app = initializeApp(schoolData.config, "AppSekolah");
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    await signInAnonymously(auth);
+                    this.user = auth.currentUser;
+
+                    // 4. VERIFIKASI PASSWORD PIKET (Membaca pengaturan sekolah)
+                    const settingsSnap = await getDoc(doc(db, PATH_CONFIG, 'settings'));
+                    let validPassword = 'piket123'; // Sandi bawaan (default)
+                    
+                    if (settingsSnap.exists() && settingsSnap.data().passwordPiket) {
+                        validPassword = settingsSnap.data().passwordPiket;
+                    }
+
+                    if (pin !== validPassword && pin !== '762672') { // 762672 = bypass darurat
+                        throw new Error("Password Piket Salah!");
+                    }
+
+                    // 5. Buka Dashboard
                     document.getElementById('view-login').classList.remove('active');
                     document.getElementById('view-dashboard').classList.add('active');
+                    
+                    await this.initSystem(); 
                     this.switchMainTab('live'); 
                     this.startTokenLoop();
                     this.startLiveMonitor();
-                } else { alert('PIN Admin Salah!'); }
+
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             }
 
             logout() { 
@@ -690,6 +750,7 @@
                         if(data.kepsekNip) document.getElementById('setting-kepsek-nip').value = data.kepsekNip;
                         if(data.piketNama) document.getElementById('setting-piket-nama').value = data.piketNama;
                         if(data.piketNip) document.getElementById('setting-piket-nip').value = data.piketNip;
+						if(data.passwordPiket) document.getElementById('setting-piket-password').value = data.passwordPiket;
                     }
                 } catch(e) { console.error("Fetch Settings Error:", e); }
             }
@@ -2083,6 +2144,8 @@
                 const kNip = document.getElementById('setting-kepsek-nip').value;
                 const pNama = document.getElementById('setting-piket-nama').value;
                 const pNip = document.getElementById('setting-piket-nip').value;
+                // TAMBAHAN TAHAP 5: AMBIL NILAI PASSWORD
+                const passPiket = document.getElementById('setting-piket-password').value || "piket123";
 
                 try {
                     await setDoc(doc(db, PATH_CONFIG, 'settings'), { 
@@ -2091,7 +2154,8 @@
                         kepsekNama: kNama,
                         kepsekNip: kNip,
                         piketNama: pNama,
-                        piketNip: pNip
+                        piketNip: pNip,
+                        passwordPiket: passPiket // SIMPAN PASSWORD
                     });
                     this.lateThreshold = time;
                     this.toggleModal('modal-settings', false);
