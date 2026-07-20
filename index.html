@@ -552,7 +552,7 @@
                 <!-- TAMBAHAN: UBAH PASSWORD PIKET -->
                 <div class="mb-4 pt-4 border-t border-slate-100">
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ubah Password Piket (Login Aplikasi Ini)</label>
-                    <input type="text" id="setting-piket-password" placeholder="Default: piket123" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono tracking-widest outline-none focus:border-indigo-500">
+                    <input type="password" id="setting-piket-password" placeholder="••••••••" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono tracking-widest text-center outline-none focus:border-indigo-500">
                     <p class="text-[10px] text-slate-400 mt-1">*Jika diubah, beritahukan ke Admin Sekolah.</p>
                 </div>
 
@@ -702,7 +702,7 @@
                     this.user = auth.currentUser;
 
                     // 4. VERIFIKASI PASSWORD PIKET (Membaca pengaturan sekolah)
-                    const settingsSnap = await getDoc(doc(db, PATH_CONFIG, 'settings'));
+                    const settingsSnap = await getDoc(doc(db, 'sekolah_settings', 'settings'));
                     let validPassword = 'piket123'; // Sandi bawaan (default)
                     
                     if (settingsSnap.exists() && settingsSnap.data().passwordPiket) {
@@ -738,7 +738,7 @@
             async fetchSettings() {
                 if (!this.user) return;
                 try {
-                    const snap = await getDoc(doc(db, PATH_CONFIG, 'settings'));
+                    const snap = await getDoc(doc(db, 'sekolah_settings', 'settings'));
                     if(snap.exists()) {
                         const data = snap.data();
                         this.lateThreshold = data.lateThreshold || "07:00";
@@ -2148,7 +2148,7 @@
                 const passPiket = document.getElementById('setting-piket-password').value || "piket123";
 
                 try {
-                    await setDoc(doc(db, PATH_CONFIG, 'settings'), { 
+                    await setDoc(doc(db, 'sekolah_settings', 'settings'), { 
                         lateThreshold: time,
                         namaSekolah: nSekolah,
                         kepsekNama: kNama,
@@ -2156,7 +2156,7 @@
                         piketNama: pNama,
                         piketNip: pNip,
                         passwordPiket: passPiket // SIMPAN PASSWORD
-                    });
+                    }, { merge: true });
                     this.lateThreshold = time;
                     this.toggleModal('modal-settings', false);
                     alert("Pengaturan & Tanda Tangan Berhasil Disimpan!");
