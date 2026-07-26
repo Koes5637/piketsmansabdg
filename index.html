@@ -1682,7 +1682,24 @@
                     const date = i.id.split('_')[0];
                     historyHtml.push(`<div class="p-2 border-b border-slate-700 text-xs flex justify-between"><span>${date}</span> <span class="text-${i.tipe === 's' ? 'blue' : 'amber'}-400 font-bold">${i.tipe === 's' ? 'Sakit' : 'Izin'}</span></div>`);
                 });
-
+				// TARIK DATA PELANGGARAN DARI WALI KELAS
+                const startDate = document.getElementById('report-start-date').value;
+                const endDate = document.getElementById('report-end-date').value;
+                try {
+                    const pelanggaranSnap = await getDocs(query(collection(db, 'catatan_pelanggaran'), where('nis', '==', nis)));
+                    pelanggaranSnap.forEach(doc => {
+                        const p = doc.data();
+                        if (p.tanggal >= startDate && p.tanggal <= endDate) {
+                            historyHtml.push(`<div class="p-2 border-b border-slate-700 text-xs flex justify-between items-start gap-4"><span>${p.tanggal}</span> <span class="text-purple-400 font-bold text-right">Kasus Wali Kelas: ${p.pelanggaran}</span></div>`);
+                        }
+                    });
+                    // Urutkan histori berdasarkan tanggal (terbaru di atas)
+                    historyHtml.sort((a, b) => {
+                        const tglA = a.match(/<span>(.*?)<\/span>/)[1];
+                        const tglB = b.match(/<span>(.*?)<\/span>/)[1];
+                        return new Date(tglB) - new Date(tglA);
+                    });
+                } catch(e) { console.error("Gagal menarik data pelanggaran wali kelas", e); }
                 const totalHadir = hadir + telat;
                 const totalSIA = sakit + izin;
                 const alpha = Math.max(0, data.totalDays - (totalHadir + totalSIA));
@@ -2276,7 +2293,20 @@
                     if (i.tipe === 's') sakit++; else izin++;
                     if (i.pelanggaran && i.pelanggaran !== "") pelanggaranList.push({tgl: i.id.split('_')[0], jenis: i.pelanggaran});
                 });
-
+				// TARIK DATA PELANGGARAN DARI WALI KELAS UNTUK CETAK WORD
+                const startDate = document.getElementById('report-start-date').value;
+                const endDate = document.getElementById('report-end-date').value;
+                try {
+                    const pelanggaranSnap = await getDocs(query(collection(db, 'catatan_pelanggaran'), where('nis', '==', nis)));
+                    pelanggaranSnap.forEach(doc => {
+                        const p = doc.data();
+                        if (p.tanggal >= startDate && p.tanggal <= endDate) {
+                            pelanggaranList.push({tgl: p.tanggal, jenis: `(Catatan Wali Kelas) ${p.pelanggaran}`});
+                        }
+                    });
+                    // Urutkan tabel pelanggaran berdasarkan tanggal
+                    pelanggaranList.sort((a,b) => new Date(a.tgl) - new Date(b.tgl));
+                } catch(e) { console.error("Gagal menarik data pelanggaran untuk Word", e); }
                 const alpha = Math.max(0, data.totalDays - (hadir + sakit + izin));
                 const getPct = (val) => data.totalDays > 0 ? Math.round((val / data.totalDays) * 100) + "%" : "0%";
 
