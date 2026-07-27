@@ -2707,11 +2707,24 @@
             async fetchPiketSchedule() {
                 const namaHari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                 const hariIni = namaHari[new Date().getDay()];
+                this.todayPiketNips = []; // Kosongkan dulu
+
                 try {
+                    // 1. Ambil dari Jadwal Harian
                     const snap = await getDoc(doc(db, 'sekolah_settings', 'jadwal_piket'));
                     if(snap.exists()) {
                         const jadwal = snap.data();
                         this.todayPiketNips = jadwal[hariIni] || [];
+                    }
+
+                    // 2. Tambahkan Petugas Utama dari Setup Sekolah
+                    const settingSnap = await getDoc(doc(db, 'sekolah_settings', 'settings'));
+                    if (settingSnap.exists() && settingSnap.data().piketNip) {
+                        const nipGlobal = settingSnap.data().piketNip;
+                        // Cegah NIP ganda jika sudah ada di jadwal harian
+                        if (!this.todayPiketNips.includes(nipGlobal)) {
+                            this.todayPiketNips.push(nipGlobal);
+                        }
                     }
                 } catch(e) { console.error("Fetch Piket Error:", e); }
             }
