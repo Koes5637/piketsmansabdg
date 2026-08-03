@@ -2527,156 +2527,158 @@
                 Packer.toBlob(doc).then(blob => saveAs(blob, `Laporan_Periode_${kelas}.docx`));
             }
 
-            // 4. Ekspor Rekap Harian Semua Sekolah
+// 4. Ekspor Rekap Harian Semua Sekolah
             async exportWordRekapSekolah() {
-                const tanggalRaw = document.getElementById('report-start-date').value;
-                if(!tanggalRaw) return alert("Pilih tanggal mulai terlebih dahulu!");
-                
-                const dateObj = new Date(tanggalRaw);
-                const tanggalFormat = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
-
-                const data = await this.fetchReportData();
-                
-                const gradeStats = {
-                    "Kelas X": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
-                    "Kelas XI": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
-                    "Kelas XII": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 }
-                };
-
-                Array.from(this.studentMap.values()).forEach(s => {
-                    let grade = "Lainnya";
-                    if (s.kelas.startsWith("XII")) grade = "Kelas XII";
-                    else if (s.kelas.startsWith("XI")) grade = "Kelas XI";
-                    else if (s.kelas.startsWith("X")) grade = "Kelas X";
+                try {
+                    const tanggalRaw = document.getElementById('report-start-date').value;
+                    if(!tanggalRaw) return alert("Pilih tanggal mulai terlebih dahulu!");
                     
-                    if (!gradeStats[grade]) gradeStats[grade] = { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 };
-                    gradeStats[grade].jml++;
-                });
+                    const dateObj = new Date(tanggalRaw);
+                    const tanggalFormat = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
 
-                data.attendance.filter(a => a.id.startsWith(tanggalRaw)).forEach(a => {
-                    let grade = "Lainnya";
-                    if (a.kelas.startsWith("XII")) grade = "Kelas XII";
-                    else if (a.kelas.startsWith("XI")) grade = "Kelas XI";
-                    else if (a.kelas.startsWith("X")) grade = "Kelas X";
+                    // AMAN DARI ERROR TANGGAL KOSONG
+                    const data = await this.fetchReportData();
+                    if (!data) return; 
                     
-                    if (gradeStats[grade]) {
-                        gradeStats[grade].hadir++; 
-                        if (a.status === 'Terlambat') gradeStats[grade].telat++; 
-                    }
-                });
+                    const gradeStats = {
+                        "Kelas X": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
+                        "Kelas XI": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
+                        "Kelas XII": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 },
+                        "Lainnya": { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 } // Loker cadangan jika ada siswa tanpa kelas
+                    };
 
-                data.izin.filter(i => i.id.startsWith(tanggalRaw)).forEach(i => {
-                    let grade = "Lainnya";
-                    if (i.kelas.startsWith("XII")) grade = "Kelas XII";
-                    else if (i.kelas.startsWith("XI")) grade = "Kelas XI";
-                    else if (i.kelas.startsWith("X")) grade = "Kelas X";
+                    Array.from(this.studentMap.values()).forEach(s => {
+                        let grade = "Lainnya";
+                        // PENTING: Ditambahkan pengaman (s.kelas &&) agar tidak crash jika kelas kosong
+                        if (s.kelas && s.kelas.startsWith("XII")) grade = "Kelas XII";
+                        else if (s.kelas && s.kelas.startsWith("XI")) grade = "Kelas XI";
+                        else if (s.kelas && s.kelas.startsWith("X")) grade = "Kelas X";
+                        
+                        if (!gradeStats[grade]) gradeStats[grade] = { jml: 0, hadir: 0, telat: 0, sakit: 0, izin: 0 };
+                        gradeStats[grade].jml++;
+                    });
+
+                    data.attendance.filter(a => a.id.startsWith(tanggalRaw)).forEach(a => {
+                        let grade = "Lainnya";
+                        if (a.kelas && a.kelas.startsWith("XII")) grade = "Kelas XII";
+                        else if (a.kelas && a.kelas.startsWith("XI")) grade = "Kelas XI";
+                        else if (a.kelas && a.kelas.startsWith("X")) grade = "Kelas X";
+                        
+                        if (gradeStats[grade]) {
+                            gradeStats[grade].hadir++; 
+                            if (a.status === 'Terlambat') gradeStats[grade].telat++; 
+                        }
+                    });
+
+                    data.izin.filter(i => i.id.startsWith(tanggalRaw)).forEach(i => {
+                        let grade = "Lainnya";
+                        if (i.kelas && i.kelas.startsWith("XII")) grade = "Kelas XII";
+                        else if (i.kelas && i.kelas.startsWith("XI")) grade = "Kelas XI";
+                        else if (i.kelas && i.kelas.startsWith("X")) grade = "Kelas X";
+                        
+                        if (gradeStats[grade]) {
+                            if (i.tipe === 's') gradeStats[grade].sakit++; 
+                            else gradeStats[grade].izin++; 
+                        }
+                    });
+
+                    const namaSekolah = document.getElementById('setting-sekolah-nama').value || "SMA Negeri 1 Bandung";
+
+                    const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, VerticalAlign, HeightRule } = docx;
                     
-                    if (gradeStats[grade]) {
-                        if (i.tipe === 's') gradeStats[grade].sakit++; 
-                        else gradeStats[grade].izin++; 
-                    }
-                });
+                    const rowH = { value: 500, rule: HeightRule.AT_LEAST };
 
-                const namaSekolah = document.getElementById('setting-sekolah-nama').value || "SMA Negeri 1 Bandung";
-
-                // PENTING: Tambahkan VerticalAlign dan HeightRule
-                const { Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, VerticalAlign, HeightRule } = docx;
-                
-                // Mengatur tinggi baris agar lebih lega dan proporsional (500 twips)
-                const rowH = { value: 500, rule: HeightRule.AT_LEAST };
-
-                // Header Tabel dengan 2 Kata (Atas Bawah) untuk Jumlah Siswa dan Total Hadir
-                const headerRow = new TableRow({
-                    height: rowH,
-                    children: [
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "KELAS", alignment: AlignmentType.CENTER, bold: true})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Jumlah", alignment: AlignmentType.CENTER, bold: true}), new Paragraph({text: "Siswa", alignment: AlignmentType.CENTER, bold: true})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Total", alignment: AlignmentType.CENTER, bold: true}), new Paragraph({text: "Hadir", alignment: AlignmentType.CENTER, bold: true})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Terlambat", alignment: AlignmentType.CENTER, bold: true})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Sakit", alignment: AlignmentType.CENTER, bold: true})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Izin", alignment: AlignmentType.CENTER, bold: true})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Alpha", alignment: AlignmentType.CENTER, bold: true})] })
-                    ]
-                });
-                
-                const rows = [headerRow];
-                let totSiswa=0, totHadir=0, totTelat=0, totSakit=0, totIzin=0, totAlpha=0;
-
-                // Fungsi pembuat persentase TANPA kurung
-                const getPct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(2).replace('.', ',') + "%" : "0%";
-
-                const gradeKeys = ["Kelas X", "Kelas XI", "Kelas XII"].filter(k => gradeStats[k] && gradeStats[k].jml > 0);
-
-                gradeKeys.forEach(k => {
-                    const c = gradeStats[k];
-                    const alpha = Math.max(0, c.jml - (c.hadir + c.sakit + c.izin)); 
+                    const headerRow = new TableRow({
+                        height: rowH,
+                        children: [
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "KELAS", alignment: AlignmentType.CENTER, bold: true})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Jumlah", alignment: AlignmentType.CENTER, bold: true}), new Paragraph({text: "Siswa", alignment: AlignmentType.CENTER, bold: true})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Total", alignment: AlignmentType.CENTER, bold: true}), new Paragraph({text: "Hadir", alignment: AlignmentType.CENTER, bold: true})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Terlambat", alignment: AlignmentType.CENTER, bold: true})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Sakit", alignment: AlignmentType.CENTER, bold: true})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Izin", alignment: AlignmentType.CENTER, bold: true})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: "Alpha", alignment: AlignmentType.CENTER, bold: true})] })
+                        ]
+                    });
                     
-                    totSiswa += c.jml; totHadir += c.hadir; totTelat += c.telat; 
-                    totSakit += c.sakit; totIzin += c.izin; totAlpha += alpha;
-                    
-                    // Baris 1: Angka (Kelas dan Jumlah Siswa di-Rowspan=2)
+                    const rows = [headerRow];
+                    let totSiswa=0, totHadir=0, totTelat=0, totSakit=0, totIzin=0, totAlpha=0;
+
+                    const getPct = (val, total) => total > 0 ? ((val / total) * 100).toFixed(2).replace('.', ',') + "%" : "0%";
+
+                    const gradeKeys = ["Kelas X", "Kelas XI", "Kelas XII", "Lainnya"].filter(k => gradeStats[k] && gradeStats[k].jml > 0);
+
+                    gradeKeys.forEach(k => {
+                        const c = gradeStats[k];
+                        const alpha = Math.max(0, c.jml - (c.hadir + c.sakit + c.izin)); 
+                        
+                        totSiswa += c.jml; totHadir += c.hadir; totTelat += c.telat; 
+                        totSakit += c.sakit; totIzin += c.izin; totAlpha += alpha;
+                        
+                        rows.push(new TableRow({ 
+                            height: rowH,
+                            children: [
+                                new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: k, alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.jml.toString(), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.hadir.toString(), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.telat.toString(), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.sakit.toString(), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.izin.toString(), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: alpha.toString(), alignment: AlignmentType.CENTER})] })
+                            ]
+                        }));
+                        
+                        rows.push(new TableRow({ 
+                            height: rowH,
+                            children: [
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.hadir, c.jml), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.telat, c.jml), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.sakit, c.jml), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.izin, c.jml), alignment: AlignmentType.CENTER})] }),
+                                new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(alpha, c.jml), alignment: AlignmentType.CENTER})] })
+                            ]
+                        }));
+                    });
+
                     rows.push(new TableRow({ 
                         height: rowH,
                         children: [
-                            new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: k, alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.jml.toString(), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.hadir.toString(), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.telat.toString(), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.sakit.toString(), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: c.izin.toString(), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: alpha.toString(), alignment: AlignmentType.CENTER})] })
+                            new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:"TOTAL", bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totSiswa.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totHadir.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totTelat.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totSakit.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totIzin.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totAlpha.toString(), bold:true})], alignment: AlignmentType.CENTER})] })
                         ]
                     }));
                     
-                    // Baris 2: Persentase
                     rows.push(new TableRow({ 
                         height: rowH,
                         children: [
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.hadir, c.jml), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.telat, c.jml), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.sakit, c.jml), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(c.izin, c.jml), alignment: AlignmentType.CENTER})] }),
-                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({text: getPct(alpha, c.jml), alignment: AlignmentType.CENTER})] })
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totHadir, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totTelat, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totSakit, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totIzin, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
+                            new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totAlpha, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] })
                         ]
                     }));
-                });
 
-                // Baris TOTAL Bawah (Angka)
-                rows.push(new TableRow({ 
-                    height: rowH,
-                    children: [
-                        new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:"TOTAL", bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ rowSpan: 2, verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totSiswa.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totHadir.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totTelat.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totSakit.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totIzin.toString(), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:totAlpha.toString(), bold:true})], alignment: AlignmentType.CENTER})] })
-                    ]
-                }));
-                
-                // Baris TOTAL Bawah (Persentase)
-                rows.push(new TableRow({ 
-                    height: rowH,
-                    children: [
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totHadir, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totTelat, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totSakit, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totIzin, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] }),
-                        new TableCell({ verticalAlign: VerticalAlign.CENTER, children: [new Paragraph({children:[new TextRun({text:getPct(totAlpha, totSiswa), bold:true})], alignment: AlignmentType.CENTER})] })
-                    ]
-                }));
+                    const doc = this.createF4Doc([
+                        new Paragraph({ children: [new TextRun({text: "Laporan Rekapitulasi Presensi per Hari", bold: true, size: 28})], alignment: AlignmentType.CENTER, spacing: {after: 200} }),
+                        new Paragraph({ children: [new TextRun({text: namaSekolah, bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 200} }),
+                        new Paragraph({ children: [new TextRun({text: `Tanggal ${tanggalFormat}`, bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 400}}),
+                        new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: rows }),
+                        new Paragraph({text: "", spacing: {before: 600}}),
+                        this.createSignatureBlock()
+                    ]);
 
-                const doc = this.createF4Doc([
-                    new Paragraph({ children: [new TextRun({text: "Laporan Rekapitulasi Presensi per Hari", bold: true, size: 28})], alignment: AlignmentType.CENTER, spacing: {after: 200} }),
-                    new Paragraph({ children: [new TextRun({text: namaSekolah, bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 200} }),
-                    new Paragraph({ children: [new TextRun({text: `Tanggal ${tanggalFormat}`, bold: true, size: 24})], alignment: AlignmentType.CENTER, spacing: {after: 400}}),
-                    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: rows }),
-                    new Paragraph({text: "", spacing: {before: 600}}),
-                    this.createSignatureBlock()
-                ]);
-
-                Packer.toBlob(doc).then(blob => saveAs(blob, `Rekap_Sekolah_${tanggalRaw}.docx`));
+                    Packer.toBlob(doc).then(blob => saveAs(blob, `Rekap_Sekolah_${tanggalRaw}.docx`));
+                    
+                } catch (error) {
+                    console.error("Gagal menyusun rekap Word:", error);
+                    alert("Gagal mencetak Rekap Sekolah. Kesalahan: " + error.message);
+                }
             }
             // ============================================================================
             // AKHIR TAMBAHAN TAHAP 3
