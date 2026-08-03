@@ -83,11 +83,12 @@
             animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        body.projector-mode .student-card[data-status="Terlambat"] { border-color: #f97316; background: rgba(249, 115, 22, 0.1); }
-        body.projector-mode .student-card[data-status="Tepat Waktu"] { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        body.projector-mode .student-card[data-status="Hadir"] { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-        body.projector-mode .student-card[data-status="Sakit"] { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-        body.projector-mode .student-card[data-status="Izin"] { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+        body.projector-mode .student-card[data-status="Terlambat"] { border-color: #f97316; background: rgba(249, 115, 22, 0.15); } /* Oranye */
+        body.projector-mode .student-card[data-status="Tepat Waktu"] { border-color: #22c55e; background: rgba(34, 197, 94, 0.15); } /* Hijau Terang */
+        body.projector-mode .student-card[data-status="Hadir"] { border-color: #22c55e; background: rgba(34, 197, 94, 0.15); } /* Hijau Terang */
+        body.projector-mode .student-card[data-status="Sakit"] { border-color: #3b82f6; background: rgba(59, 130, 246, 0.15); } /* Biru */
+        body.projector-mode .student-card[data-status="Izin"] { border-color: #eab308; background: rgba(234, 179, 8, 0.15); } /* Kuning/Emas */
+        body.projector-mode .student-card[data-status="Alpha"] { border-color: #ef4444; background: rgba(239, 68, 68, 0.15); } /* Merah */
 
         body.projector-mode .student-name { font-size: 1.8rem; color: #f8fafc; font-weight: 800; letter-spacing: 0.025em; }
         body.projector-mode .student-info { font-size: 1.2rem; color: #cbd5e1; font-family: 'Courier New', monospace; font-weight: bold; }
@@ -1385,10 +1386,10 @@
                         datasets: [{
                             data: [hadir, sakit, izin, alpha],
                             backgroundColor: [
-                                '#10b981', 
-                                '#3b82f6', 
-                                '#6366f1', 
-                                '#ef4444'  
+                                '#22c55e',  // Hadir (Hijau)
+                                '#3b82f6',  // Sakit (Biru)
+                                '#eab308',  // Izin (Kuning)
+                                '#ef4444'   // Alpha (Merah)
                             ],
                             borderWidth: 0,
                             hoverOffset: 10
@@ -1411,49 +1412,51 @@
             }
 
             renderTopLists(freqData, durData) {
-                const sortedFreq = Object.entries(freqData)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10);
-                
-                const freqHTML = sortedFreq.map(([nis, count], i) => {
-                    const s = this.studentMap.get(nis) || {nama: 'Unknown', kelas: '-'};
-                    return `
-                        <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
-                            <div class="flex items-center gap-3">
-                                <div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-400">#${i+1}</div>
-                                <div>
-                                    <p class="text-xs font-bold text-white">${s.nama}</p>
-                                    <p class="text-[10px] text-slate-500 font-mono">${nis} &bull; Kelas ${s.kelas}</p>
-                                </div>
+                // JALAN PINTAS NINJA: FILTER DATA GURU/UNKNOWN DARI TOP 10
+            const filterUnknown = (data) => Object.entries(data).filter(([nis]) => this.studentMap.has(nis));
+
+            const sortedFreq = filterUnknown(freqData)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const freqHTML = sortedFreq.map(([nis, count], i) => {
+                const s = this.studentMap.get(nis) || {nama: 'Unknown', kelas: '-'};
+                return `
+                    <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400">#${i+1}</div>
+                            <div>
+                                <p class="text-xs font-bold text-white">${s.nama}</p>
+                                <p class="text-[10px] text-slate-500 font-mono">${nis} &bull; Kelas ${s.kelas}</p>
                             </div>
-                            <div class="text-sm font-bold text-orange-400">${count}x</div>
                         </div>
-                    `;
-                }).join('');
-                document.getElementById('list-top-freq').innerHTML = freqHTML || '<div class="text-center text-slate-600 text-xs">Belum ada data.</div>';
+                        <div class="text-sm font-bold text-orange-400">${count}x</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('list-top-freq').innerHTML = freqHTML || '<div class="text-xs text-slate-500 italic text-center py-4">Tidak ada data keterlambatan.</div>';
 
-                const sortedDur = Object.entries(durData)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10);
+            const sortedDur = filterUnknown(durData)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 10);
 
-                const durHTML = sortedDur.map(([nis, mins], i) => {
-                    const s = this.studentMap.get(nis) || {nama: 'Unknown', kelas: '-'};
-                    return `
-                         <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
-                            <div class="flex items-center gap-3">
-                                <div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-400">#${i+1}</div>
-                                <div>
-                                    <p class="text-xs font-bold text-white">${s.nama}</p>
-                                    <p class="text-[10px] text-slate-500 font-mono">${nis} &bull; Kelas ${s.kelas}</p>
-                                </div>
+            const durHTML = sortedDur.map(([nis, mins], i) => {
+                const s = this.studentMap.get(nis) || {nama: 'Unknown', kelas: '-'};
+                return `
+                    <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400">#${i+1}</div>
+                            <div>
+                                <p class="text-xs font-bold text-white">${s.nama}</p>
+                                <p class="text-[10px] text-slate-500 font-mono">${nis} &bull; Kelas ${s.kelas}</p>
                             </div>
-                            <div class="text-sm font-bold text-red-400">${mins} mnt</div>
                         </div>
-                    `;
-                }).join('');
-                document.getElementById('list-top-duration').innerHTML = durHTML || '<div class="text-center text-slate-600 text-xs">Belum ada data.</div>';
-            }
-
+                        <div class="text-sm font-bold text-red-400">${mins} mnt</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('list-top-duration').innerHTML = durHTML || '<div class="text-xs text-slate-500 italic text-center py-4">Tidak ada data keterlambatan.</div>';
+		}
             openEditModal(itemStr) {
                 const item = JSON.parse(decodeURIComponent(itemStr));
                 this.currentEditItem = item;
@@ -1928,9 +1931,9 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: '% Total Kehadiran', data: hadirData, backgroundColor: '#ffffff', borderRadius: 4 },
-                            { label: '% Keterlambatan', data: telatData, backgroundColor: '#eab308', borderRadius: 4 }
-                        ]
+							{ label: '% Total Kehadiran', data: hadirData, backgroundColor: '#22c55e', borderRadius: 4 },
+							{ label: '% Keterlambatan', data: telatData, backgroundColor: '#f97316', borderRadius: 4 }
+						]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
@@ -1956,12 +1959,12 @@
                     data: {
                         labels: labels,
                         datasets: [
-                            { label: '% Hadir Tepat', data: dataArr.map(c => c.hadirPct), backgroundColor: '#ffffff', borderRadius: 4 },
-                            { label: '% Terlambat', data: dataArr.map(c => c.telatPct), backgroundColor: '#eab308', borderRadius: 4 },
-                            { label: '% Izin', data: dataArr.map(c => c.izinPct), backgroundColor: '#22c55e', borderRadius: 4 },
-                            { label: '% Sakit', data: dataArr.map(c => c.sakitPct), backgroundColor: '#3b82f6', borderRadius: 4 },
-                            { label: '% Alpha', data: dataArr.map(c => c.alphaPct), backgroundColor: '#ef4444', borderRadius: 4 }
-                        ]
+							{ label: '% Hadir Tepat', data: dataArr.map(c => c.hadirPct), backgroundColor: '#22c55e', borderRadius: 4 },
+							{ label: '% Terlambat', data: dataArr.map(c => c.telatPct), backgroundColor: '#f97316', borderRadius: 4 },
+							{ label: '% Izin', data: dataArr.map(c => c.izinPct), backgroundColor: '#eab308', borderRadius: 4 },
+							{ label: '% Sakit', data: dataArr.map(c => c.sakitPct), backgroundColor: '#3b82f6', borderRadius: 4 },
+							{ label: '% Alpha', data: dataArr.map(c => c.alphaPct), backgroundColor: '#ef4444', borderRadius: 4 }
+						]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
@@ -2019,35 +2022,36 @@
             exportStatsData() {
                 if (!this.currentStats) return alert("Harap tunggu hingga data statistik selesai dimuat.");
 
-                const { studentLateCount, studentLateDuration } = this.currentStats;
+                // JALAN PINTAS NINJA: FILTER DATA EXPORT
+            const filterUnknown = (data) => Object.entries(data).filter(([nis]) => this.studentMap.has(nis));
 
-                const topFreq = Object.entries(studentLateCount)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(([nis, count], i) => {
-                        const s = this.studentMap.get(nis) || {};
-                        return {
-                            "Peringkat": i + 1,
-                            "NIS": nis,
-                            "Nama Siswa": s.nama || "Unknown",
-                            "Kelas": s.kelas || "-",
-                            "Frekuensi (Kali)": count
-                        };
-                    });
+            const topFreq = filterUnknown(studentLateCount)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([nis, count], i) => {
+                    const s = this.studentMap.get(nis) || {};
+                    return {
+                        "Peringkat": i + 1,
+                        "NIS": nis,
+                        "Nama Siswa": s.nama || "Unknown",
+                        "Kelas": s.kelas || "-",
+                        "Frekuensi (Kali)": count
+                    };
+                });
 
-                const topDur = Object.entries(studentLateDuration)
-                    .sort((a,b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(([nis, mins], i) => {
-                        const s = this.studentMap.get(nis) || {};
-                        return {
-                            "Peringkat": i + 1,
-                            "NIS": nis,
-                            "Nama Siswa": s.nama || "Unknown",
-                            "Kelas": s.kelas || "-",
-                            "Total Durasi (Menit)": mins
-                        };
-                    });
+            const topDur = filterUnknown(studentLateDuration)
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([nis, mins], i) => {
+                    const s = this.studentMap.get(nis) || {};
+                    return {
+                        "Peringkat": i + 1,
+                        "NIS": nis,
+                        "Nama Siswa": s.nama || "Unknown",
+                        "Kelas": s.kelas || "-",
+                        "Total Durasi (Menit)": mins
+                    };
+                });
 
                 if (topFreq.length === 0) topFreq.push({"Info": "Tidak ada data keterlambatan."});
                 if (topDur.length === 0) topDur.push({"Info": "Tidak ada data keterlambatan."});
